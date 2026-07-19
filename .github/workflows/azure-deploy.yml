@@ -9,8 +9,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Converts repository name to lowercase for Docker image naming compatibility
-  IMAGE_NAME: ${{ github.repository }}
+  # Hardcoded lowercase repository name for Docker registry compatibility
+  IMAGE_NAME: harsha-code-per/stadiumos
 
 jobs:
   build-and-push:
@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'stadiumos-backend-hk' # Replace this with your exact Azure Web App resource name if different
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: 'ghcr.io/${{ github.repository }}/backend:latest'
+          images: 'ghcr.io/harsha-code-per/stadiumos/backend:latest'
