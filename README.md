@@ -95,6 +95,10 @@ graph TD
    All database writes are performed asynchronously through an in-memory background worker thread, ensuring mutations (resetting, reporting incidents) return immediately to the frontend and eliminate database/disk-write blocking.
 5. **In-Memory Per-IP Cooldown**:
    A 3-second cooldown is enforced on public chat requests to prevent double-clicks or bot spam from exhausting API quotas.
+6. **FastAPI GZip Transmission Compression**:
+   The backend applies automated GZip compression on all JSON responses using `GZipMiddleware`, reducing network transmission overhead for large state dashboard synchronization payloads by up to 90%.
+7. **React Component Memoization**:
+   The frontend utilizes React `useMemo` hooks to memoize complex state calculations (such as closest-gate wayfinding sorting and active incident logs filtering), eliminating redundant processing loops during rendering.
 
 ---
 
