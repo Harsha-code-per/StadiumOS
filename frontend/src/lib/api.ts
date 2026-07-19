@@ -81,11 +81,12 @@ async function fetchAPI<T>(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error("Rate limit exceeded. Please wait a moment before trying again.");
-      }
       const errBody = await response.json().catch(() => ({}));
-      throw new Error(errBody.detail || `Server responded with status ${response.status}`);
+      const errorMsg = errBody.message || errBody.detail;
+      if (response.status === 429) {
+        throw new Error(errorMsg || "Rate limit exceeded. Please wait a moment before trying again.");
+      }
+      throw new Error(errorMsg || `Server responded with status ${response.status}`);
     }
 
     return await response.json();

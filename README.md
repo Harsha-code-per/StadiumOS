@@ -2,11 +2,11 @@
 
 ![Stadium AI Co-Pilot Landing Interface](./readme-assets/landing.png)
 
-A unified, real-time stadium operations and wayfinding platform built for the **FIFA World Cup 2026 Stadium Operations Challenge (Challenge 4)**. It bridges the gap between the Control Room, Field Crew, and Fans under a single, secure backend reasoning layer.
+Stadium AI Co-Pilot is a unified, real-time stadium operations and wayfinding platform designed to resolve critical safety bottlenecks, gate congestion, and communication barriers during major sporting events like the FIFA World Cup 2026. By connecting stadium operators in the Command Center, field crews on the ground, and fans in the stands to a single, high-resilience AI reasoning engine, the system ensures optimal crowd flow, immediate incident triaging, and instant multilingual public announcements.
 
 ### Live Deployed Link
-🌐 **[stadium-os-chi.vercel.app](https://stadium-os-chi.vercel.app)** — Frontend (Vercel)
-🗥️ **Backend API**: `https://stadiumos-backend-hk.azurewebsites.net` (Azure App Service, Python 3.11 + FastAPI)
+🌐 **[stadium-os-chi.vercel.app](https://stadium-os-chi.vercel.app)** — Frontend (Vercel)  
+🗥️ **Backend API**: `https://stadiumos-backend-hk.azurewebsites.net` (Azure App Service, Python + FastAPI)
 
 ---
 
@@ -29,14 +29,14 @@ Stadium logistics during a major tournament represent complex bottlenecks: gate 
 This submission explicitly addresses the following challenge brief angles:
 
 | Angle | Implementation |
-|-------|----------------|
-| **Navigation & Wayfinding** | Fan Portal: Live gate wait-time board, AI best-gate recommender, and multilingual chat that routes fans to the least-congested gate in real-time |
-| **Crowd Management** | Command Center: Visual SVG crowd density map with per-stand heat levels, one-click scenario simulations (crowd surge, VIP arrival) triggering AI triage |
-| **Multilingual Assistance** | All AI chat responds in the fan's language (EN/ES/FR auto-detected). Trilingual PA Announcement generator creates public address scripts in all three FIFA 2026 host languages |
-| **Operational Intelligence** | Incident desk with AI-generated category, severity, recommended staff, and a one-sentence justification. Cascading Gemini model fallback for high availability |
-| **Real-Time Decision Support** | Dashboard polls every 4 seconds. Simulation engine mutates state and immediately re-triages. Gate wait times auto-update across all views |
-| **Transportation & Accessibility** | Gate flow-rate editor lets operators manage turnstile throughput. ARIA live region announces new incidents to screen readers. Keyboard navigation throughout |
-| **Sustainability** | Compact 1.3MB repository, lightweight polling (not aggressive WebSockets), and a stateless mock-data layer that avoids database costs |
+|---|---|
+| **Navigation & Wayfinding** | Fan Portal: Live gate wait-time board, AI best-gate recommender, and multilingual chat that routes fans to the least-congested gate in real-time. |
+| **Crowd Management** | Command Center: Visual SVG crowd density map with per-stand heat levels, one-click scenario simulations (crowd surge, VIP arrival) triggering AI triage. |
+| **Multilingual Assistance** | All AI chat responds in the fan's language (EN/ES/FR auto-detected). Trilingual PA Announcement generator creates public address scripts in all three FIFA 2026 host languages. |
+| **Operational Intelligence** | Incident desk with AI-generated category, severity, recommended staff, and reasoning. High-availability dual-key failover with honest, transparent rate-limit handling. |
+| **Real-Time Decision Support** | Dashboards poll every 4 seconds (visibility-aware to conserve resources). Simulation engine mutates state and immediately re-triages. Gate wait times auto-update across all views. |
+| **Transportation & Accessibility** | Gate flow-rate editor lets operators manage turnstile throughput. ARIA live region announces new incidents to screen readers. Keyboard navigation throughout. |
+| **Sustainability** | Compact codebase, non-blocking background write queue, client-side polling suspension on inactive tabs, and persistent HTTP connections to keep server and network overhead low. |
 
 ### Our Approach: The Unified Co-Pilot
 Instead of siloed applications, Stadium AI Co-Pilot connects all three views to a single FastAPI reasoning engine powered by Gemini. 
@@ -61,13 +61,11 @@ graph TD
         LM[🛡️ Rate Limiter Middleware]
         DM[💾 Thread-Safe Data Manager]
         JSON[(stadium_mock_data.json)]
-        GC_CLIENT[🤖 Cascading Gemini Client]
+        GC_CLIENT[🤖 Dual-Key Gemini Client]
     end
 
     subgraph LLM [Gemini API]
-        G25[Gemini 2.5 Flash - Primary]
-        G15F[Gemini 1.5 Flash - Fallback]
-        G15P[Gemini 1.5 Pro - Deep Reasoning]
+        G20[Gemini 2.0 Flash]
     end
 
     CC -->|Get State / Ask Chat| API
@@ -79,21 +77,24 @@ graph TD
     DM <--> JSON
     
     API --> GC_CLIENT
-    GC_CLIENT -->|Cascade / Exponential Backoff| G25
-    G25 -.->|Fail / 429| G15F
-    G15F -.->|Fail / 429| G15P
+    GC_CLIENT -->|Try Key 1| G20
+    G20 -.-->|Fail / 429| GC_CLIENT
+    GC_CLIENT -->|Try Key 2| G20
+    G20 -.-->|Fail / 429| API
 ```
 
 ### Key Architectural Decisions
 
-1. **Cascading Model Sequence (Rate-Limit Handler)**:
-   The backend reasoning client attempts calls starting with the fast, high-performance `gemini-2.5-flash`. If it hits rate limits (HTTP 429) or transient server errors, it logs a warning and cascades to `gemini-1.5-flash`, then `gemini-1.5-pro`, retrying with exponential backoff and randomized jitter.
-2. **Prompt-Injection Resistance**:
+1. **Dual-Key API Failover (Resilience)**:
+   The backend reasoning client utilizes the high-performance `gemini-2.0-flash` model. To bypass API rate-limiting issues on free tiers, it implements a primary-to-secondary key failover: if `GEMINI_API_KEY_PRIMARY` returns an HTTP 429, it immediately tries `GEMINI_API_KEY_SECONDARY` before throwing a clean error.
+2. **Honest Error Handling**:
+   If both keys are exhausted, the app fails honestly by returning a standard HTTP 429 JSON response (`{ "error": "rate_limited", "message": "AI service is temporarily busy. Please try again in a moment." }`). The frontend detects this and renders a friendly warning banner in the chat window with a manual **Retry** button. Mock fallback text and cascading fallback loops have been completely removed to avoid faking AI output.
+3. **Prompt-Injection Resistance**:
    Incident reports and chat boxes are untrusted user inputs. The backend sanitizes these inputs, enforces a 300-character cap, and wraps user variables in strict XML-style tags (`<user_untrusted_input>`) in system prompts. It explicitly instructs the model to ignore override statements (like "ignore previous instructions") inside these tags.
-3. **AI Reasoning Transparency**:
-   Every operational recommendation includes an AI-generated `"why"` justification displayed directly to the operator (e.g. *"Recommended: Medic Elena Rostova — nearest medical staff to Gate 4, currently unassigned"*).
-4. **Trilingual Dynamic PA Generator**:
-   Connects the staff and fan experiences: given an active incident, operators can generate a public-address announcement drafted by the AI in **English, Spanish, and French** (the languages of the FIFA 2026 hosts: USA, Mexico, Canada) to redirect fans.
+4. **Thread-Safe Write Queue**:
+   All database writes are performed asynchronously through an in-memory background worker thread, ensuring mutations (resetting, reporting incidents) return immediately to the frontend and eliminate database/disk-write blocking.
+5. **In-Memory Per-IP Cooldown**:
+   A 3-second cooldown is enforced on public chat requests to prevent double-clicks or bot spam from exhausting API quotas.
 
 ---
 
@@ -104,7 +105,7 @@ Copy-paste these example prompts into the chat box of each portal to test the AI
 1. **Control Room Chat Prompt**:
    > *"We have a crowd surge in Stand B. Recommend an evacuation routing strategy using alternative gates based on live wait times."*
    >
-   > *AI Response:* Identifies that Gate 2 (serving Stand B) is congested (28 min wait) and Stand B density is High; suggests routing fans through Gate 3 (8 min wait) or Gate 4 (5 min wait).
+   > *AI Response:* Identifies that Gate 2 (serving Stand B) is congested (48 min wait) and Stand B density is Critical; suggests routing fans through Gate 3 (8 min wait) or Gate 4 (5 min wait).
    
 2. **Ground Crew Chat Prompt**:
    > *"A fan at concession area C4 reported a lost child. What is the official protocol I should follow?"*
@@ -114,7 +115,7 @@ Copy-paste these example prompts into the chat box of each portal to test the AI
 3. **Fan Portal Chat Prompt**:
    > *"I'm in Stand B and want to exit. Which gate is faster right now?"*
    >
-   > *AI Response:* Dynamically reads live database, compares Gate 2 (28m wait) vs Gate 3 (8m wait), and routes the fan to Gate 3 for a faster exit.
+   > *AI Response:* Dynamically reads live database, compares Gate 2 (48m wait) vs Gate 3 (8m wait), and routes the fan to Gate 3 for a faster exit.
 
 ---
 
@@ -123,7 +124,7 @@ Copy-paste these example prompts into the chat box of each portal to test the AI
 ### Prerequisites
 - Node.js v20+ / npm v10+
 - Python 3.10+
-- Gemini API Key
+- Gemini API Keys (Primary and Secondary)
 
 ### Backend Setup
 1. Navigate to the backend directory:
@@ -141,7 +142,8 @@ Copy-paste these example prompts into the chat box of each portal to test the AI
    ```
 4. Create a `.env` file in the `backend/` directory:
    ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
+   GEMINI_API_KEY_PRIMARY=your_primary_gemini_api_key_here
+   GEMINI_API_KEY_SECONDARY=your_secondary_gemini_api_key_here
    ```
 5. Run the server:
    ```bash
@@ -172,10 +174,10 @@ PYTHONPATH=. pytest tests/ -v
 
 ---
 
-## 📐 Assumptions & Caveats
+## 📐 Known Limitations
 
 - **Shared-State Tradeoff**: The stadium state is stored in a single mock JSON file. Because mock data is mutated on the backend (e.g. when clicking simulation triggers or completing tasks), **all active live visitors will share the same state**. In a production system, this would be scoped to individual user sessions or distinct stadium databases.
-- **Network-First Fallback**: If `GEMINI_API_KEY` is not present, the client automatically defaults to a local rule-based heuristic classifier to keep the application 100% operational for offline testing.
+- **API Quota Dependence**: Since the app handles API rate-limiting honestly without mock fallbacks, users may occasionally see a "temporarily busy" notification if both API keys have exceeded their Requests Per Minute (RPM) limits under heavy traffic.
 
 ---
 
@@ -185,11 +187,3 @@ PYTHONPATH=. pytest tests/ -v
 - **Screen Reader Announcements**: The live incident feed utilizes `aria-live="polite"` to read out new operational incidents automatically.
 - **Keyboard Navigation**: Interactive tables, forms, and cards are fully focusable using Tab and executable using Space/Enter. Focus outlines (`ring-2 ring-primary`) are highly visible.
 - **Reduced Motion**: Disables status animations and pulsing borders for users who have enabled `prefers-reduced-motion` at the OS level.
-
----
-
-## 🚀 What We'd Add with More Time
-
-1. **WebSockets Integration**: Replace polling with WebSockets to stream crowd densities and gate metrics instantly.
-2. **Indoor SVG Navigation**: Visual turn-by-turn pathfinding lines drawn on the stadium SVG layout.
-3. **Multimodal Incident Reporting**: Allow ground crew to snap photos of turnstile issues or bag backlogs, feeding images directly to Gemini's vision capability to assess repair severity.

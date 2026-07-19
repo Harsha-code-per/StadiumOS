@@ -32,19 +32,34 @@ app.add_middleware(
 
 # Custom In-Memory Rate Limiting Middleware
 IP_LIMITS = {}  # ip -> list of timestamps
+CHAT_COOLDOWNS = {}  # ip -> last_timestamp
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     path = request.url.path
-    # Rate limit public endpoints (chat, incidents reporting, simulation)
+    
+    # 3-second chat request cooldown to prevent rapid double-clicks
+    if path.startswith("/api/copilot/chat"):
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        last_time = CHAT_COOLDOWNS.get(ip, 0.0)
+        if now - last_time < 3.0:
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "rate_limited",
+                    "message": "AI is temporarily busy — try again shortly."
+                }
+            )
+        CHAT_COOLDOWNS[ip] = now
+
+    # General rate limiting (max 30 requests per minute)
     if path.startswith("/api/copilot/chat") or path.startswith("/api/incidents") or path.startswith("/api/simulate"):
         ip = request.client.host if request.client else "unknown"
         now = time.time()
-        # Clean timestamps older than 60 seconds
         timestamps = IP_LIMITS.setdefault(ip, [])
         IP_LIMITS[ip] = [t for t in timestamps if now - t < 60]
         
-        # Max 30 requests per minute
         if len(IP_LIMITS[ip]) >= 30:
             return JSONResponse(
                 status_code=429,
@@ -54,6 +69,18 @@ async def rate_limit_middleware(request: Request, call_next):
         
     response = await call_next(request)
     return response
+
+from app.gemini_client import GeminiRateLimitException
+
+@app.exception_handler(GeminiRateLimitException)
+async def gemini_rate_limit_handler(request: Request, exc: GeminiRateLimitException):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "rate_limited",
+            "message": str(exc)
+        }
+    )
 
 @app.get("/api/health")
 def health_check():
