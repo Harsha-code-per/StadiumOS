@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Radio, HardHat, Ticket, Zap, AlertTriangle, Bot, Users, HeartPulse, Crown, Info, RefreshCw } from "lucide-react";
 
 export default function CommandCenter() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -29,7 +30,9 @@ export default function CommandCenter() {
   // Copilot Chat States
   const [chatInput, setChatInput] = useState("");
   const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Welcome to the Command Center. I have live access to gates, crowd density, and staff roster. Ask me for recommendations or dispatch suggestions." }
+    { sender: "copilot", text: "Welcome to the Command Center. I have live access to gates, crowd density, and staff roster. Ask me for recommendations or dispatch suggestions." },
+    { sender: "user", text: "What is the current bottleneck at Gate 2 and how do we resolve it?" },
+    { sender: "copilot", text: "Gate 2 currently has a high wait time of 48 minutes with only 4 of 6 security lanes active. Recommending deploying Officer Sarah Jenkins (Security) from adjacent Stand A (North) to open the remaining lanes and relieve crowd backlog." }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
 
@@ -233,7 +236,7 @@ export default function CommandCenter() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                ⚡ Scenario Simulation Engine
+                <Zap className="h-5 w-5 text-primary" /> Scenario Simulation Engine
               </CardTitle>
               <CardDescription className="text-xs">
                 Mutate stadium settings to trigger real-time AI classifications, dispatches, and wayfinding.
@@ -253,29 +256,33 @@ export default function CommandCenter() {
             <Button
               onClick={() => handleSimulate("crowd_surge")}
               disabled={simulating !== null}
-              className="text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+              className="text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 flex items-center justify-center gap-1.5"
             >
+              <Users className="h-3.5 w-3.5" />
               {simulating === "crowd_surge" ? "Simulating..." : "Surge Stand B"}
             </Button>
             <Button
               onClick={() => handleSimulate("medical")}
               disabled={simulating !== null}
-              className="text-xs font-medium bg-amber-600 text-white hover:bg-amber-700"
+              className="text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 flex items-center justify-center gap-1.5"
             >
-              {simulating === "medical" ? "Medical Gate 4" : "Medical Gate 4"}
+              <HeartPulse className="h-3.5 w-3.5" />
+              {simulating === "medical" ? "Simulating..." : "Medical Gate 4"}
             </Button>
             <Button
               onClick={() => handleSimulate("outage")}
               disabled={simulating !== null}
-              className="text-xs font-medium bg-rose-600 text-white hover:bg-rose-700"
+              className="text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 flex items-center justify-center gap-1.5"
             >
+              <Zap className="h-3.5 w-3.5" />
               {simulating === "outage" ? "Simulating..." : "Outage Stand D"}
             </Button>
             <Button
               onClick={() => handleSimulate("vip_arrival")}
               disabled={simulating !== null}
-              className="text-xs font-medium bg-blue-600 text-white hover:bg-blue-700"
+              className="text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-1.5"
             >
+              <Crown className="h-3.5 w-3.5" />
               {simulating === "vip_arrival" ? "Simulating..." : "VIP Gate 1"}
             </Button>
           </div>
@@ -395,6 +402,10 @@ export default function CommandCenter() {
                     <circle cx="250" cy="15" r="12" fill={data.gates.find(g => g.id === "gate_6")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
                     <text x="250" y="18" textAnchor="middle" className="text-[8px] font-bold fill-white">G6</text>
                   </svg>
+                  <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground mt-2 border-t pt-2">
+                    <Info className="h-3.5 w-3.5 text-primary" />
+                    <span>Stand E (VIP) and Stand F (Upper) are elevated premium boxes.</span>
+                  </div>
                 </div>
               ) : (
                 <div className="py-12 text-muted-foreground">Connecting layout database...</div>
@@ -405,8 +416,8 @@ export default function CommandCenter() {
           {/* Gates and Staff Details Tabs */}
           <Tabs defaultValue="gates" className="w-full">
             <TabsList className="grid grid-cols-2 bg-muted/50 p-1 rounded-md border border-border">
-              <TabsTrigger value="gates" className="font-semibold text-xs py-2 rounded">📡 Turnstiles & Gates</TabsTrigger>
-              <TabsTrigger value="staff" className="font-semibold text-xs py-2 rounded">🦺 Ground Personnel Roster</TabsTrigger>
+              <TabsTrigger value="gates" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><Radio className="h-3.5 w-3.5 text-primary" /> Turnstiles & Gates</TabsTrigger>
+              <TabsTrigger value="staff" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><HardHat className="h-3.5 w-3.5 text-primary" /> Ground Personnel Roster</TabsTrigger>
             </TabsList>
             
             {/* Gates panel */}
@@ -557,10 +568,10 @@ export default function CommandCenter() {
           )}
 
           {/* Incident Feed */}
-          <Card className="h-[320px] flex flex-col">
+          <Card className="h-[320px] flex flex-col border-l-[4px] border-l-primary shadow-md">
             <CardHeader className="py-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold">🚨 Live Incident Desk</CardTitle>
+                <CardTitle className="text-base font-bold flex items-center gap-1.5"><AlertTriangle className="h-5 w-5 text-primary" /> Live Incident Desk</CardTitle>
                 <CardDescription className="text-xs">
                   Active operations emergency logs.
                 </CardDescription>
@@ -626,7 +637,7 @@ export default function CommandCenter() {
                 {/* AI recommendation transparency */}
                 {selectedIncident.status === "Reported" && selectedIncident.recommended_staff_id && (
                   <div className="p-2.5 rounded bg-emerald-50 border border-emerald-200">
-                    <span className="block font-bold text-emerald-800 text-[10px] uppercase mb-1">🤖 AI Recommended Dispatch</span>
+                    <span className="block font-bold text-emerald-800 text-[10px] uppercase mb-1 flex items-center gap-1"><Bot className="h-3.5 w-3.5 text-emerald-600" /> AI Recommended Dispatch</span>
                     <p className="font-semibold text-emerald-950 mb-1">
                       Assign to: {data?.staff.find(s => s.id === selectedIncident.recommended_staff_id)?.name || selectedIncident.recommended_staff_id}
                     </p>
@@ -699,9 +710,9 @@ export default function CommandCenter() {
           )}
 
           {/* AI Co-Pilot Console */}
-          <Card className="h-[380px] flex flex-col">
+            <Card className="h-[380px] flex flex-col">
             <CardHeader className="py-3">
-              <CardTitle className="text-base font-bold">🤖 Command Co-Pilot Chat</CardTitle>
+              <CardTitle className="text-base font-bold flex items-center gap-1.5"><Bot className="h-5 w-5 text-primary" /> Command Co-Pilot Chat</CardTitle>
               <CardDescription className="text-xs">
                 Inquire about live routing alternatives, staff counts, or procedures.
               </CardDescription>
@@ -736,9 +747,9 @@ export default function CommandCenter() {
               </button>
               <button 
                 onClick={() => handleSendChat("Who is the closest security officer we can dispatch to Stand B crowd surge?")}
-                className="text-[10px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left transition-colors"
+                className="text-[10px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left transition-colors flex items-center gap-1"
               >
-                🦺 Security for B?
+                <HardHat className="h-3 w-3 text-muted-foreground" /> Security for B?
               </button>
             </div>
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Radio, HardHat, Ticket } from "lucide-react";
 
 export default function Home() {
   return (
@@ -26,7 +27,7 @@ export default function Home() {
         <Link href="/command-center" className="group">
           <Card className="h-full border-border hover:border-primary/50 transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden bg-card hover:bg-primary/[0.01]">
             <CardHeader className="space-y-2">
-              <div className="text-3xl">📡</div>
+              <div className="text-3xl text-primary"><Radio className="h-8 w-8" /></div>
               <CardTitle className="group-hover:text-primary transition-colors flex items-center gap-2">
                 Control Room 
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">Command</span>
@@ -51,7 +52,7 @@ export default function Home() {
         <Link href="/ground-crew" className="group">
           <Card className="h-full border-border hover:border-primary/50 transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden bg-card hover:bg-primary/[0.01]">
             <CardHeader className="space-y-2">
-              <div className="text-3xl">🦺</div>
+              <div className="text-3xl text-primary"><HardHat className="h-8 w-8" /></div>
               <CardTitle className="group-hover:text-primary transition-colors flex items-center gap-2">
                 Ground Crew
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-secondary-foreground/10 text-secondary-foreground">Field</span>
@@ -75,7 +76,7 @@ export default function Home() {
         <Link href="/fan" className="group">
           <Card className="h-full border-border hover:border-primary/50 transition-all duration-300 hover:shadow-md cursor-pointer relative overflow-hidden bg-card hover:bg-primary/[0.01]">
             <CardHeader className="space-y-2">
-              <div className="text-3xl">🎫</div>
+              <div className="text-3xl text-primary"><Ticket className="h-8 w-8" /></div>
               <CardTitle className="group-hover:text-primary transition-colors flex items-center gap-2">
                 Fan Portal
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600">Public</span>

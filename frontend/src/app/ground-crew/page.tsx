@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HardHat, AlertTriangle, Bot } from "lucide-react";
 
 export default function GroundCrew() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -22,7 +23,9 @@ export default function GroundCrew() {
   // Chat States
   const [chatInput, setChatInput] = useState("");
   const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Ground Crew assistance active. Ask me for emergency procedures, closest resources, or duties." }
+    { sender: "copilot", text: "Ground Crew assistance active. Ask me for emergency procedures, closest resources, or duties." },
+    { sender: "user", text: "What's the protocol for a medical emergency at Stand B?" },
+    { sender: "copilot", text: "Protocol for Medical Emergency: 1. Stay with the patient and ensure their immediate area is clear. 2. Call the Command Center to report details. 3. Coordinate with incoming medical responders to guide them to Stand B." }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
 
@@ -101,7 +104,9 @@ export default function GroundCrew() {
       <Card className="border-primary/20 bg-primary/[0.01]">
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-xl font-bold text-foreground">🦺 Field Ground Crew Dashboard</h1>
+            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <HardHat className="h-6 w-6 text-primary" /> Field Ground Crew Dashboard
+            </h1>
             <p className="text-xs text-muted-foreground">Select your roster identity to sync tasks, zones, and local guidelines.</p>
           </div>
           <div className="w-full sm:w-[240px]">
@@ -203,7 +208,7 @@ export default function GroundCrew() {
             </Card>
 
             {/* Incident reporter */}
-            <Card>
+            <Card className="border-l-[4px] border-l-primary shadow-md">
               <CardHeader className="py-4">
                 <CardTitle className="text-base font-bold">⚠️ Report Incident to Control Room</CardTitle>
                 <CardDescription className="text-xs font-medium">
@@ -246,7 +251,7 @@ export default function GroundCrew() {
                       className="w-full text-xs p-2.5 border border-border bg-background rounded-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
                     />
                     <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                      <span>Max 300 characters. Sanitize defenses active.</span>
+                      <span>Max 300 characters.</span>
                       <span>{incDescription.length}/300</span>
                     </div>
                   </div>
@@ -262,7 +267,11 @@ export default function GroundCrew() {
                     disabled={reporting || !incDescription.trim()} 
                     className="w-full h-9 bg-primary hover:bg-primary/95 text-white font-bold text-xs"
                   >
-                    {reporting ? "Analyzing & Reporting..." : "🚨 Report to Command Center"}
+                    {reporting ? "Analyzing & Reporting..." : (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <AlertTriangle className="h-4 w-4" /> Report to Command Center
+                      </span>
+                    )}
                   </Button>
                 </form>
               </CardContent>
@@ -274,7 +283,9 @@ export default function GroundCrew() {
           <div className="md:col-span-5">
             <Card className="h-[520px] flex flex-col">
               <CardHeader className="py-4">
-                <CardTitle className="text-base font-bold">🤖 Local Crew Co-Pilot</CardTitle>
+                <CardTitle className="text-base font-bold flex items-center gap-1.5">
+                  <Bot className="h-5 w-5 text-primary" /> Local Crew Co-Pilot
+                </CardTitle>
                 <CardDescription className="text-xs">
                   Ask for emergency protocols, supervisor contacts, or local stand issues.
                 </CardDescription>

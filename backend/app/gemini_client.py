@@ -45,7 +45,7 @@ async def call_gemini_with_cascade(
     api_key = get_api_key()
     if not api_key:
         logger.warning("GEMINI_API_KEY is not set. Returning mock fallback reasoning.")
-        return get_mock_fallback_response(prompt, json_mode)
+        return get_mock_fallback_response(prompt, json_mode, system_instruction)
 
     # Clean input
     prompt = sanitize_input(prompt)
@@ -101,22 +101,31 @@ async def call_gemini_with_cascade(
         
     # If all models in the cascade failed
     logger.error("All models in the cascade failed. Triggering mock fallback reasoning.")
-    return get_mock_fallback_response(prompt, json_mode)
+    return get_mock_fallback_response(prompt, json_mode, system_instruction)
 
 
-def get_mock_fallback_response(prompt: str, json_mode: bool) -> str:
+def get_mock_fallback_response(prompt: str, json_mode: bool, system_instruction: str = "") -> str:
     """Mock fallback reasoning if API keys are missing or rate limits are completely exhausted."""
     if json_mode:
+        # Check if this is a PA Announcement request
+        if "public address" in system_instruction.lower() or "pa " in system_instruction.lower() or "announcement" in system_instruction.lower():
+            clean_desc = prompt.replace("<user_untrusted_input>", "").replace("</user_untrusted_input>", "").strip()
+            return json.dumps({
+                "en": f"Attention fans. An operational update has occurred: {clean_desc}. Please cooperate with venue staff.",
+                "es": f"Atención aficionados. Se ha producido una actualización operativa: {clean_desc}. Por favor coopere con el personal.",
+                "fr": f"Attention aux supporters. Une mise à jour opérationnelle a eu lieu: {clean_desc}. Veuillez coopérer avec le personnel."
+            })
+
         category = "Security"
         severity = "Medium"
         desc_lower = prompt.lower()
-        if "leak" in desc_lower or "broken" in desc_lower or "concession" in desc_lower:
+        if "leak" in desc_lower or "broken" in desc_lower or "concession" in desc_lower or "power" in desc_lower or "light" in desc_lower:
             category = "Maintenance"
             severity = "Medium"
         elif "medical" in desc_lower or "heart" in desc_lower or "chest" in desc_lower or "hurt" in desc_lower or "injury" in desc_lower or "collapsed" in desc_lower or "cpr" in desc_lower:
             category = "Medical"
             severity = "High"
-        elif "fight" in desc_lower or "drunk" in desc_lower or "stolen" in desc_lower or "theft" in desc_lower or "perimeter" in desc_lower:
+        elif "fight" in desc_lower or "drunk" in desc_lower or "stolen" in desc_lower or "theft" in desc_lower or "perimeter" in desc_lower or "fire" in desc_lower:
             category = "Security"
             severity = "High"
         elif "crowd" in desc_lower or "surge" in desc_lower or "gate" in desc_lower or "backlog" in desc_lower:

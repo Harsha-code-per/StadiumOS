@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Zap, Ticket, AlertTriangle, Bot, Compass } from "lucide-react";
 
 export default function FanPortal() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -16,7 +17,9 @@ export default function FanPortal() {
   // Chat States
   const [chatInput, setChatInput] = useState("");
   const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Welcome! I am your AI Stadium Assistant. I have live access to crowd levels and gate traffic. Ask me for the fastest routes or closest gates." }
+    { sender: "copilot", text: "Welcome! I am your AI Stadium Assistant. I have live access to crowd levels and gate traffic. Ask me for the fastest routes or closest gates." },
+    { sender: "user", text: "Which gate is fastest to enter Stand B right now?" },
+    { sender: "copilot", text: "The gates serving Stand B are Gate 2 and Gate 3. Gate 2 has a high wait time of 48 minutes. I recommend using Gate 3, which is open with a wait time of only 8 minutes." }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
 
@@ -76,11 +79,11 @@ export default function FanPortal() {
       
       {/* Banner */}
       <div className="text-center space-y-2 py-4">
-        <Badge variant="outline" className="px-3 py-1 bg-green-500/10 border-green-500/20 text-green-700 font-bold">
-          ⚡ Live Traffic & Wayfinding Support
+        <Badge variant="outline" className="px-3 py-1 bg-green-500/10 border-green-500/20 text-green-700 font-bold flex items-center justify-center gap-1.5 w-fit mx-auto">
+          <Zap className="h-3.5 w-3.5" /> Live Traffic & Wayfinding Support
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-          🛈 Fan AI Wayfinding Center
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center justify-center gap-2">
+          <Compass className="h-6 w-6 text-primary animate-spin-slow" /> Fan AI Wayfinding Center
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl mx-auto">
           Avoid long ticket queues. Consult live gate statuses, check crowd densities, and get instant dynamic directions in English, Spanish, or French.
@@ -96,7 +99,7 @@ export default function FanPortal() {
           {/* Traffic dashboard */}
           <Card>
             <CardHeader className="py-4">
-              <CardTitle className="text-base font-bold">🎫 Live Gate Wait Times</CardTitle>
+              <CardTitle className="text-base font-bold flex items-center gap-1.5"><Ticket className="h-5 w-5 text-primary" /> Live Gate Wait Times</CardTitle>
               <CardDescription className="text-xs">
                 Turnstile queue updates synced directly from security lanes.
               </CardDescription>
@@ -217,7 +220,7 @@ export default function FanPortal() {
                     </div>
                   ) : (
                     <div className="p-3 rounded bg-rose-50 border border-rose-200 text-rose-950 text-xs">
-                      <span className="block font-bold text-rose-800 uppercase text-[9px] mb-1">🚨 Alert</span>
+                      <span className="font-bold text-rose-800 uppercase text-[9px] mb-1 flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" /> Alert</span>
                       All gates serving this stand are currently closed. Please contact the nearest usher or supervisor.
                     </div>
                   )}
@@ -232,7 +235,7 @@ export default function FanPortal() {
         <div className="md:col-span-5">
           <Card className="h-[530px] flex flex-col">
             <CardHeader className="py-4">
-              <CardTitle className="text-base font-bold">🤖 Multilingual Fan Assistant</CardTitle>
+              <CardTitle className="text-base font-bold flex items-center gap-1.5"><Bot className="h-5 w-5 text-primary" /> Multilingual Fan Assistant</CardTitle>
               <CardDescription className="text-xs">
                 Ask wayfinding questions in English, Spanish, or French.
               </CardDescription>
@@ -269,7 +272,7 @@ export default function FanPortal() {
                 onClick={() => handleSendChat("Which gate has the fastest entry wait time at this moment?")}
                 className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
               >
-                🎫 Fastest Entry Gate?
+                <span className="flex items-center gap-1"><Ticket className="h-3 w-3" /> Fastest Entry Gate?</span>
               </button>
               <button 
                 onClick={() => handleSendChat("¿Hay alguna puerta congestionada actualmente y qué opciones tengo?")}
