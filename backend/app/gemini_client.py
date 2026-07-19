@@ -72,7 +72,7 @@ async def call_gemini(
     prompt = sanitize_input(prompt)
 
     # Single primary model as requested
-    model = "gemini-2.0-flash"
+    model = "gemini-3.5-flash"
     
     payload = {
         "contents": [{"parts": [{"text": f"User Input:\n{prompt}"}]}],
