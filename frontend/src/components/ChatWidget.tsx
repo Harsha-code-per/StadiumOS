@@ -28,6 +28,49 @@ interface ChatWidgetProps {
   suggestions?: { label: string; query: string }[];
 }
 
+const renderMarkdown = (text: string) => {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+
+  return lines.map((line, lineIdx) => {
+    const isBullet = line.trim().startsWith("* ") || line.trim().startsWith("- ");
+    let content = line;
+    
+    if (isBullet) {
+      content = line.replace(/^\s*[\*\-]\s+/, "");
+    }
+
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*\*.*?\*\*|\*.*?\*)/g;
+    const splitParts = content.split(regex);
+
+    splitParts.forEach((part, partIdx) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        parts.push(<strong key={partIdx} className="font-bold">{part.slice(2, -2)}</strong>);
+      } else if (part.startsWith("*") && part.endsWith("*")) {
+        parts.push(<em key={partIdx} className="italic">{part.slice(1, -1)}</em>);
+      } else {
+        parts.push(part);
+      }
+    });
+
+    if (isBullet) {
+      return (
+        <li key={lineIdx} className="ml-4 list-disc pl-1 my-0.5">
+          {parts}
+        </li>
+      );
+    } else {
+      return (
+        <p key={lineIdx} className="min-h-[1em] mb-1 last:mb-0">
+          {parts}
+        </p>
+      );
+    }
+  });
+};
+
 // ── Football SVG icon (matches the ⚽ emoji in the Header) ───────────────────
 
 function FootballIcon({ className }: { className?: string }) {
@@ -240,7 +283,7 @@ export default function ChatWidget({
                       : "bg-white border border-border text-foreground mr-auto shadow-sm"
                   }`}
                 >
-                  {msg.text}
+                  {renderMarkdown(msg.text)}
                 </div>
               );
             })}
