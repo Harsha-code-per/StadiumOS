@@ -2,6 +2,7 @@ import time
 import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.schemas import (
@@ -34,6 +35,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Custom In-Memory Rate Limiting Middleware
 IP_LIMITS = {}  # ip -> list of timestamps

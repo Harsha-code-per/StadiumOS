@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { api, DashboardData, Zone } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,8 +53,8 @@ export default function FanPortal() {
     };
   }, [loadData]);
 
-  // Logic to calculate best gate for a selected stand
-  const getBestGateForStand = () => {
+  // Logic to calculate best gate for a selected stand (memoized for efficiency)
+  const bestGate = useMemo(() => {
     if (!dashboard || !activeStand) return null;
     
     const associatedGates = dashboard.gates.filter(g => activeStand.gates.includes(g.id));
@@ -62,12 +62,10 @@ export default function FanPortal() {
     
     if (openGates.length === 0) return null;
     
-    // Sort by wait time
-    openGates.sort((a, b) => a.wait_time - b.wait_time);
-    return openGates[0];
-  };
-
-  const bestGate = getBestGateForStand();
+    // Sort a shallow copy by wait time to avoid in-place mutation side-effects
+    const sortedGates = [...openGates].sort((a, b) => a.wait_time - b.wait_time);
+    return sortedGates[0];
+  }, [dashboard, activeStand]);
 
   if (error && !dashboard) {
     return (

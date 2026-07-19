@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { api, DashboardData, Incident } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,12 @@ export default function CommandCenter() {
   const [editingGateId, setEditingGateId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<string>("");
   const [editWaitTime, setEditWaitTime] = useState<number>(0);
+
+  // Memoized list of active incidents (for efficiency, preventing redundant filters)
+  const activeIncidents = useMemo(() => {
+    if (!data) return [];
+    return data.incidents.filter(i => i.status !== "Resolved");
+  }, [data]);
 
   // Fetch Dashboard State
   const fetchDashboard = useCallback(async (silent = false) => {
@@ -469,12 +475,12 @@ export default function CommandCenter() {
                 </CardDescription>
               </div>
               <Badge variant="outline" className="bg-rose-50 border-rose-200 text-rose-700 font-bold">
-                {data?.incidents.filter(i => i.status !== "Resolved").length || 0} Active
+                {activeIncidents.length} Active
               </Badge>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto px-4 py-0 space-y-2">
-              {data && data.incidents.filter(i => i.status !== "Resolved").length > 0 ? (
-                data.incidents.filter(i => i.status !== "Resolved").map(inc => (
+              {activeIncidents.length > 0 ? (
+                activeIncidents.map(inc => (
                   <div
                     key={inc.id}
                     onClick={() => {
