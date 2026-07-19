@@ -65,7 +65,7 @@ graph TD
     end
 
     subgraph LLM [Gemini API]
-        G20[Gemini 2.0 Flash]
+        G35[Gemini 3.5 Flash]
     end
 
     CC -->|Get State / Ask Chat| API
@@ -77,16 +77,16 @@ graph TD
     DM <--> JSON
     
     API --> GC_CLIENT
-    GC_CLIENT -->|Try Key 1| G20
-    G20 -.-->|Fail / 429| GC_CLIENT
-    GC_CLIENT -->|Try Key 2| G20
-    G20 -.-->|Fail / 429| API
+    GC_CLIENT -->|Try Key 1| G35
+    G35 -. "Fail / 429" .-> GC_CLIENT
+    GC_CLIENT -->|Try Key 2| G35
+    G35 -. "Fail / 429" .-> API
 ```
 
 ### Key Architectural Decisions
 
 1. **Dual-Key API Failover (Resilience)**:
-   The backend reasoning client utilizes the high-performance `gemini-2.0-flash` model. To bypass API rate-limiting issues on free tiers, it implements a primary-to-secondary key failover: if `GEMINI_API_KEY_PRIMARY` returns an HTTP 429, it immediately tries `GEMINI_API_KEY_SECONDARY` before throwing a clean error.
+   The backend reasoning client utilizes the high-performance `gemini-3.5-flash` model. To bypass API rate-limiting issues on free tiers, it implements a primary-to-secondary key failover: if `GEMINI_API_KEY_PRIMARY` returns an HTTP 429, it immediately tries `GEMINI_API_KEY_SECONDARY` before throwing a clean error.
 2. **Honest Error Handling**:
    If both keys are exhausted, the app fails honestly by returning a standard HTTP 429 JSON response (`{ "error": "rate_limited", "message": "AI service is temporarily busy. Please try again in a moment." }`). The frontend detects this and renders a friendly warning banner in the chat window with a manual **Retry** button. Mock fallback text and cascading fallback loops have been completely removed to avoid faking AI output.
 3. **Prompt-Injection Resistance**:
