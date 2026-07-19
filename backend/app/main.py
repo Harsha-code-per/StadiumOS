@@ -60,7 +60,7 @@ def health_check():
     """System health status check."""
     return {
         "status": "ok",
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "service": "StadiumOS Backend",
         "model_cascade_enabled": True
     }

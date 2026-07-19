@@ -15,8 +15,9 @@ logger = logging.getLogger("gemini_client")
 # Cascading model list from newest/fastest to standard backup models
 MODEL_CASCADE = [
     "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
+    "gemini-flash-latest",
+    "gemini-2.0-flash",
+    "gemini-pro-latest"
 ]
 
 def get_api_key() -> str:

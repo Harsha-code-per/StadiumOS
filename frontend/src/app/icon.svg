@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Green circle background -->
+  <circle cx="16" cy="16" r="15" fill="#166534" stroke="#14532d" stroke-width="1"/>
+  <!-- White football hexagon patches -->
+  <circle cx="16" cy="16" r="14" fill="white" opacity="0.12"/>
+  <!-- Central pentagon (top) -->
+  <polygon points="16,4 20,9 18,14 14,14 12,9" fill="white"/>
+  <!-- Lower left -->
+  <polygon points="6,14 9,10 14,14 12,19 7,18" fill="white"/>
+  <!-- Lower right -->
+  <polygon points="26,14 23,10 18,14 20,19 25,18" fill="white"/>
+  <!-- Bottom left -->
+  <polygon points="8,22 12,19 14,24 11,28 7,25" fill="white"/>
+  <!-- Bottom right -->
+  <polygon points="24,22 20,19 18,24 21,28 25,25" fill="white"/>
+  <!-- Bottom center -->
+  <polygon points="16,28 12,24 14,19 18,19 20,24" fill="white"/>
+  <!-- Circular outline -->
+  <circle cx="16" cy="16" r="15" fill="none" stroke="#14532d" stroke-width="1"/>
+</svg>

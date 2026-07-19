@@ -288,7 +288,7 @@ class StadiumDataManager:
             inc_id = f"INC-{len(incidents) + 1:03d}"
             
             import datetime
-            now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+            now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
             
             new_incident = {
                 "id": inc_id,

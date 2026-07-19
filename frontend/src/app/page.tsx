@@ -72,7 +72,7 @@ export default function Home() {
           variant="outline"
           className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold bg-white/80 border-primary/30 text-primary backdrop-blur-sm shadow-sm"
         >
-          ⚽ GenAI Hackathon — Challenge 4 · FIFA World Cup 2026
+          ⚽ Stadium Operations Command System
         </Badge>
 
         <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
@@ -89,21 +89,6 @@ export default function Home() {
           <strong className="text-slate-800">Fans</strong> — with real-time crowd management,
           multilingual wayfinding, and AI-powered incident triage.
         </p>
-
-        {/* Stats row */}
-        <div className="flex flex-wrap items-center justify-center gap-6 pt-2">
-          {[
-            { value: "3", label: "Role portals" },
-            { value: "EN/ES/FR", label: "Languages" },
-            { value: "Gemini 2.5", label: "AI engine" },
-            { value: "< 1 MB", label: "Repo size" },
-          ].map(stat => (
-            <div key={stat.label} className="text-center">
-              <div className="text-2xl font-extrabold text-primary">{stat.value}</div>
-              <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">{stat.label}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── Role Cards ───────────────────────────────────────── */}
