@@ -47,7 +47,7 @@ export default function FanPortal() {
   const bestGate = getBestGateForStand();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-[96%] mx-auto space-y-6">
       
       {/* Banner */}
       <div className="text-center space-y-2 py-4">
@@ -65,8 +65,8 @@ export default function FanPortal() {
       {/* Main content grid */}
       <div className="grid md:grid-cols-12 gap-6">
         
-        {/* Left Side: Gate Queue Wait Times & Wayfinding selector (7 cols) */}
-        <div className="md:col-span-7 space-y-6">
+        {/* Left Side: Gate Queue Wait Times (6 cols) */}
+        <div className="md:col-span-6 space-y-6">
           
           {/* Traffic dashboard */}
           <Card>
@@ -104,8 +104,10 @@ export default function FanPortal() {
               ))}
             </CardContent>
           </Card>
+        </div>
 
-          {/* Interactive wayfinder tool */}
+        {/* Right Side: Interactive wayfinder tool (6 cols) */}
+        <div className="md:col-span-6 space-y-6">
           <Card>
             <CardHeader className="py-4">
               <CardTitle className="text-base font-bold">🗺️ Dynamic Wayfinding Helper</CardTitle>

@@ -178,8 +178,10 @@ export default function GroundCrew() {
                 )}
               </CardContent>
             </Card>
+          </div>
 
-            {/* Incident reporter */}
+          {/* Incident reporter (5 cols) */}
+          <div className="md:col-span-5 space-y-6">
             <Card className="border-l-[4px] border-l-primary shadow-md">
               <CardHeader className="py-4">
                 <CardTitle className="text-base font-bold">⚠️ Report Incident to Control Room</CardTitle>

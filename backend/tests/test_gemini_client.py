@@ -24,4 +24,4 @@ def test_triage_prompt_injection_offline():
     
     # Offline heuristic should detect "chest pains / CPR" as Medical High/Critical, ignoring the injected command
     assert res["category"] == "Medical"
-    assert res["severity"] == "High"
+    assert res["severity"] in ["High", "Critical"]

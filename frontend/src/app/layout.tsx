@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Header />
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 w-full max-w-[96%] mx-auto px-4 sm:px-8 py-8">
           {children}
         </main>
         <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground mt-auto bg-muted/30">

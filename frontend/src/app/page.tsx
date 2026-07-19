@@ -92,7 +92,7 @@ export default function Home() {
       </div>
 
       {/* ── Role Cards ───────────────────────────────────────── */}
-      <div className="grid md:grid-cols-3 gap-6 w-full max-w-5xl px-4 pb-16">
+      <div className="grid md:grid-cols-3 gap-6 w-full max-w-7xl px-4 pb-16">
         {roleCards.map(card => {
           const Icon = card.icon;
           return (

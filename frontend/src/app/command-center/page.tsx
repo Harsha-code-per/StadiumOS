@@ -263,284 +263,129 @@ export default function CommandCenter() {
         </CardContent>
       </Card>
 
-      {/* Main Grid: Map and Incidents */}
-      <div className="grid lg:grid-cols-12 gap-6">
-        {/* Left Side: Live Map and Data Tables (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Visual SVG map representation */}
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold">🏟️ Real-Time Stadium Layout</CardTitle>
-              <CardDescription className="text-xs">
-                Visualizing stand crowd densities and gate wait statuses.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center bg-muted/20 py-4 relative">
-              {data ? (
-                <div className="w-full max-w-lg">
-                  <svg viewBox="-20 -10 560 390" className="w-full h-auto">
-                    {/* Pitch markings */}
-                    <rect x="150" y="100" width="200" height="150" fill="#a7f3d0" stroke="#10b981" strokeWidth="2" rx="4" />
-                    <line x1="250" y1="100" x2="250" y2="250" stroke="#10b981" strokeWidth="2" />
-                    <circle cx="250" cy="175" r="30" fill="none" stroke="#10b981" strokeWidth="2" />
-                    
-                    {/* Stand A (North) */}
-                    <path
-                      d="M 120 70 A 180 180 0 0 1 380 70 L 360 90 A 150 150 0 0 0 140 90 Z"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_a")?.density || "Low"
-                      )} stroke-2`}
-                    />
-                    <text x="250" y="-2" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
-                      Stand A — {data.zones.find(z => z.id === "stand_a")?.density}
-                    </text>
+      {/* Large Visual SVG map representation at the top */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-bold">🏟️ Real-Time Stadium Layout</CardTitle>
+          <CardDescription className="text-xs">
+            Visualizing stand crowd densities and gate wait statuses.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center bg-muted/20 py-6 relative">
+          {data ? (
+            <div className="w-full max-w-3xl mx-auto">
+              <svg viewBox="-20 -10 560 390" className="w-full h-auto">
+                {/* Pitch markings */}
+                <rect x="150" y="100" width="200" height="150" fill="#a7f3d0" stroke="#10b981" strokeWidth="2" rx="4" />
+                <line x1="250" y1="100" x2="250" y2="250" stroke="#10b981" strokeWidth="2" />
+                <circle cx="250" cy="175" r="30" fill="none" stroke="#10b981" strokeWidth="2" />
+                
+                {/* Stand A (North) */}
+                <path
+                  d="M 120 70 A 180 180 0 0 1 380 70 L 360 90 A 150 150 0 0 0 140 90 Z"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_a")?.density || "Low"
+                  )} stroke-2`}
+                />
+                <text x="250" y="-2" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+                  Stand A — {data.zones.find(z => z.id === "stand_a")?.density}
+                </text>
 
-                    {/* Stand B (East) */}
-                    <path
-                      d="M 390 80 A 180 180 0 0 1 390 270 L 370 250 A 150 150 0 0 0 370 100 Z"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_b")?.density || "Low"
-                      )} stroke-2`}
-                    />
-                    <text x="497" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(90 497 175)">
-                      Stand B — {data.zones.find(z => z.id === "stand_b")?.density}
-                    </text>
+                {/* Stand B (East) */}
+                <path
+                  d="M 390 80 A 180 180 0 0 1 390 270 L 370 250 A 150 150 0 0 0 370 100 Z"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_b")?.density || "Low"
+                  )} stroke-2`}
+                />
+                <text x="497" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(90 497 175)">
+                  Stand B — {data.zones.find(z => z.id === "stand_b")?.density}
+                </text>
 
-                    {/* Stand C (South) */}
-                    <path
-                      d="M 380 280 A 180 180 0 0 1 120 280 L 140 260 A 150 150 0 0 0 360 260 Z"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_c")?.density || "Low"
-                      )} stroke-2`}
-                    />
-                    <text x="250" y="363" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
-                      Stand C — {data.zones.find(z => z.id === "stand_c")?.density}
-                    </text>
+                {/* Stand C (South) */}
+                <path
+                  d="M 380 280 A 180 180 0 0 1 120 280 L 140 260 A 150 150 0 0 0 360 260 Z"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_c")?.density || "Low"
+                  )} stroke-2`}
+                />
+                <text x="250" y="363" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+                  Stand C — {data.zones.find(z => z.id === "stand_c")?.density}
+                </text>
 
-                    {/* Stand D (West) */}
-                    <path
-                      d="M 110 270 A 180 180 0 0 1 110 80 L 130 100 A 150 150 0 0 0 130 250 Z"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_d")?.density || "Low"
-                      )} stroke-2`}
-                    />
-                    <text x="-8" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(-90 -8 175)">
-                      Stand D — {data.zones.find(z => z.id === "stand_d")?.density}
-                    </text>
+                {/* Stand D (West) */}
+                <path
+                  d="M 110 270 A 180 180 0 0 1 110 80 L 130 100 A 150 150 0 0 0 130 250 Z"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_d")?.density || "Low"
+                  )} stroke-2`}
+                />
+                <text x="-8" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(-90 -8 175)">
+                  Stand D — {data.zones.find(z => z.id === "stand_d")?.density}
+                </text>
 
-                    {/* Stand E (Club/VIP Center) */}
-                    <rect
-                      x="160" y="110" width="80" height="40"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_e")?.density || "Low"
-                      )} stroke-2 opacity-80`}
-                    />
-                    <text x="200" y="130" textAnchor="middle" className="text-[8px] font-semibold fill-foreground">
-                      Stand E (VIP)
-                    </text>
+                {/* Stand E (Club/VIP Center) */}
+                <rect
+                  x="160" y="110" width="80" height="40"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_e")?.density || "Low"
+                  )} stroke-2 opacity-80`}
+                />
+                <text x="200" y="130" textAnchor="middle" className="text-[8px] font-semibold fill-foreground">
+                  Stand E (VIP)
+                </text>
 
-                    {/* Stand F (Upper Concourse Center) */}
-                    <rect
-                      x="260" y="200" width="80" height="40"
-                      className={`${getDensityColor(
-                        data.zones.find(z => z.id === "stand_f")?.density || "Low"
-                      )} stroke-2 opacity-80`}
-                    />
-                    <text x="300" y="220" textAnchor="middle" className="text-[8px] font-semibold fill-foreground">
-                      Stand F (Upper)
-                    </text>
+                {/* Stand F (Upper Concourse Center) */}
+                <rect
+                  x="260" y="200" width="80" height="40"
+                  className={`${getDensityColor(
+                    data.zones.find(z => z.id === "stand_f")?.density || "Low"
+                  )} stroke-2 opacity-80`}
+                />
+                <text x="300" y="220" textAnchor="middle" className="text-[8px] font-semibold fill-foreground">
+                  Stand F (Upper)
+                </text>
 
-                    {/* Gates markers as outer circles */}
-                    {/* Gate 1 VIP */}
-                    <circle cx="100" cy="50" r="12" fill={data.gates.find(g => g.id === "gate_1")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="100" y="53" textAnchor="middle" className="text-[8px] font-bold fill-white">G1</text>
+                {/* Gates markers as outer circles */}
+                {/* Gate 1 VIP */}
+                <circle cx="100" cy="50" r="12" fill={data.gates.find(g => g.id === "gate_1")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="100" y="53" textAnchor="middle" className="text-[8px] font-bold fill-white">G1</text>
 
-                    {/* Gate 2 */}
-                    <circle cx="400" cy="50" r="12" fill={data.gates.find(g => g.id === "gate_2")?.status === "Open" ? "#10b981" : data.gates.find(g => g.id === "gate_2")?.status === "Congested" ? "#f59e0b" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="400" y="53" textAnchor="middle" className="text-[8px] font-bold fill-white">G2</text>
+                {/* Gate 2 */}
+                <circle cx="400" cy="50" r="12" fill={data.gates.find(g => g.id === "gate_2")?.status === "Open" ? "#10b981" : data.gates.find(g => g.id === "gate_2")?.status === "Congested" ? "#f59e0b" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="400" y="53" textAnchor="middle" className="text-[8px] font-bold fill-white">G2</text>
 
-                    {/* Gate 3 */}
-                    <circle cx="430" cy="290" r="12" fill={data.gates.find(g => g.id === "gate_3")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="430" y="293" textAnchor="middle" className="text-[8px] font-bold fill-white">G3</text>
+                {/* Gate 3 */}
+                <circle cx="430" cy="290" r="12" fill={data.gates.find(g => g.id === "gate_3")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="430" y="293" textAnchor="middle" className="text-[8px] font-bold fill-white">G3</text>
 
-                    {/* Gate 4 */}
-                    <circle cx="250" cy="335" r="12" fill={data.gates.find(g => g.id === "gate_4")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="250" y="338" textAnchor="middle" className="text-[8px] font-bold fill-white">G4</text>
+                {/* Gate 4 */}
+                <circle cx="250" cy="335" r="12" fill={data.gates.find(g => g.id === "gate_4")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="250" y="338" textAnchor="middle" className="text-[8px] font-bold fill-white">G4</text>
 
-                    {/* Gate 5 */}
-                    <circle cx="70" cy="290" r="12" fill={data.gates.find(g => g.id === "gate_5")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="70" y="293" textAnchor="middle" className="text-[8px] font-bold fill-white">G5</text>
+                {/* Gate 5 */}
+                <circle cx="70" cy="290" r="12" fill={data.gates.find(g => g.id === "gate_5")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="70" y="293" textAnchor="middle" className="text-[8px] font-bold fill-white">G5</text>
 
-                    {/* Gate 6 */}
-                    <circle cx="250" cy="15" r="12" fill={data.gates.find(g => g.id === "gate_6")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
-                    <text x="250" y="18" textAnchor="middle" className="text-[8px] font-bold fill-white">G6</text>
-                  </svg>
-                  <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground mt-2 border-t pt-2">
-                    <Info className="h-3.5 w-3.5 text-primary" />
-                    <span>Stand E (VIP) and Stand F (Upper) are elevated premium boxes.</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-12 text-muted-foreground">Connecting layout database...</div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Gates and Staff Details Tabs */}
-          <Tabs defaultValue="gates" className="w-full">
-            <TabsList className="grid grid-cols-2 bg-muted/50 p-1 rounded-md border border-border">
-              <TabsTrigger value="gates" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><Radio className="h-3.5 w-3.5 text-primary" /> Turnstiles & Gates</TabsTrigger>
-              <TabsTrigger value="staff" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><HardHat className="h-3.5 w-3.5 text-primary" /> Ground Personnel Roster</TabsTrigger>
-            </TabsList>
-            
-            {/* Gates panel */}
-            <TabsContent value="gates" className="mt-4">
-              <Card>
-                <CardContent className="p-0 overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-muted/30 border-b border-border font-bold">
-                        <th className="p-3">Gate Name</th>
-                        <th className="p-3">Operational Status</th>
-                        <th className="p-3">Wait Time</th>
-                        <th className="p-3">Flow Rate</th>
-                        <th className="p-3">Security Lanes</th>
-                        <th className="p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data?.gates.map(gate => (
-                        <tr key={gate.id} className="border-b border-border hover:bg-muted/10">
-                          <td className="p-3 font-semibold">{gate.name}</td>
-                          <td className="p-3">
-                            <Badge 
-                              className={
-                                gate.status === "Open" 
-                                  ? "bg-emerald-100 text-emerald-800" 
-                                  : gate.status === "Congested" 
-                                    ? "bg-amber-100 text-amber-800" 
-                                    : "bg-rose-100 text-rose-800"
-                              }
-                            >
-                              {gate.status}
-                            </Badge>
-                          </td>
-                          <td className="p-3 font-medium">{gate.wait_time} mins</td>
-                          <td className="p-3 text-muted-foreground">{gate.flow_rate} people/min</td>
-                          <td className="p-3 text-muted-foreground">{gate.security_lanes_active}/{gate.security_lanes_total} Active</td>
-                          <td className="p-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => {
-                                setEditingGateId(gate.id);
-                                setEditStatus(gate.status);
-                                setEditWaitTime(gate.wait_time);
-                              }}
-                              className="h-7 text-[10px] px-2"
-                            >
-                              Edit Status
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Staff roster panel */}
-            <TabsContent value="staff" className="mt-4">
-              <Card>
-                <CardContent className="p-0 overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-muted/30 border-b border-border font-bold">
-                        <th className="p-3">Staff Member</th>
-                        <th className="p-3">Role</th>
-                        <th className="p-3">Assigned Zone</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Primary Tasks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data?.staff.map(staff => (
-                        <tr key={staff.id} className="border-b border-border hover:bg-muted/10">
-                          <td className="p-3 font-semibold">{staff.name}</td>
-                          <td className="p-3 text-muted-foreground">{staff.role}</td>
-                          <td className="p-3 font-medium">{staff.zone}</td>
-                          <td className="p-3">
-                            <Badge 
-                              className={
-                                staff.status === "Active" 
-                                  ? "bg-emerald-100 text-emerald-800" 
-                                  : staff.status === "Dispatched" 
-                                    ? "bg-rose-100 text-rose-800" 
-                                    : "bg-slate-100 text-slate-800"
-                              }
-                            >
-                              {staff.status}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-muted-foreground max-w-[200px] truncate" title={staff.tasks.join(", ")}>
-                            {staff.tasks[0] || "No assigned tasks"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-        </div>
-
-        {/* Right Side: Incident Board & Chat Co-Pilot (4 cols) */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* Gate Editor Dialog modal fallback box (inline inside panel) */}
-          {editingGateId && (
-            <Card className="border-amber-500/20 bg-amber-500/[0.01]">
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm font-bold text-amber-700">⚙️ Edit status: {data?.gates.find(g => g.id === editingGateId)?.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 pt-0">
-                <form onSubmit={handleUpdateGate} className="flex flex-wrap items-end gap-3">
-                  <div className="flex-1 min-w-[120px]">
-                    <label className="text-[10px] font-bold text-muted-foreground block mb-1">Status</label>
-                    <Select value={editStatus} onValueChange={val => setEditStatus(val || "")}>
-                      <SelectTrigger className="h-8 text-xs bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Open">Open</SelectItem>
-                        <SelectItem value="Congested">Congested</SelectItem>
-                        <SelectItem value="Closed">Closed</SelectItem>
-                        <SelectItem value="Emergency Only">Emergency Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="w-[80px]">
-                    <label className="text-[10px] font-bold text-muted-foreground block mb-1">Wait Time (m)</label>
-                    <Input 
-                      type="number" 
-                      value={editWaitTime} 
-                      onChange={e => setEditWaitTime(parseInt(e.target.value) || 0)}
-                      className="h-8 text-xs bg-background" 
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Save</Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingGateId(null)} className="h-8 text-xs">Cancel</Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+                {/* Gate 6 */}
+                <circle cx="250" cy="15" r="12" fill={data.gates.find(g => g.id === "gate_6")?.status === "Open" ? "#10b981" : "#ef4444"} stroke="#fff" strokeWidth="2" />
+                <text x="250" y="18" textAnchor="middle" className="text-[8px] font-bold fill-white">G6</text>
+              </svg>
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground mt-2 border-t pt-2">
+                <Info className="h-3.5 w-3.5 text-primary" />
+                <span>Stand E (VIP) and Stand F (Upper) are elevated premium boxes.</span>
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-muted-foreground">Connecting layout database...</div>
           )}
+        </CardContent>
+      </Card>
 
+      {/* Main Grid below the Layout Map */}
+      <div className="grid lg:grid-cols-12 gap-6">
+        {/* Left Side: Live Incident Desk (lg:col-span-5) */}
+        <div className="lg:col-span-5 space-y-6">
           {/* Incident Feed */}
           <Card className="h-[320px] flex flex-col border-l-[4px] border-l-primary shadow-md">
             <CardHeader className="py-3 flex flex-row items-center justify-between">
@@ -682,7 +527,158 @@ export default function CommandCenter() {
               </CardContent>
             </Card>
           )}
+        </div>
 
+        {/* Right Side: Turnstiles & Gates / Ground Personnel Roster tabs (lg:col-span-7) */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Gate Editor Dialog modal fallback box (inline inside panel) */}
+          {editingGateId && (
+            <Card className="border-amber-500/20 bg-amber-500/[0.01]">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm font-bold text-amber-700">⚙️ Edit status: {data?.gates.find(g => g.id === editingGateId)?.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-3 pt-0">
+                <form onSubmit={handleUpdateGate} className="flex flex-wrap items-end gap-3">
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-[10px] font-bold text-muted-foreground block mb-1">Status</label>
+                    <Select value={editStatus} onValueChange={val => setEditStatus(val || "")}>
+                      <SelectTrigger className="h-8 text-xs bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Open">Open</SelectItem>
+                        <SelectItem value="Congested">Congested</SelectItem>
+                        <SelectItem value="Closed">Closed</SelectItem>
+                        <SelectItem value="Emergency Only">Emergency Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-[80px]">
+                    <label className="text-[10px] font-bold text-muted-foreground block mb-1">Wait Time (m)</label>
+                    <Input 
+                      type="number" 
+                      value={editWaitTime} 
+                      onChange={e => setEditWaitTime(parseInt(e.target.value) || 0)}
+                      className="h-8 text-xs bg-background" 
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Save</Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingGateId(null)} className="h-8 text-xs">Cancel</Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Gates and Staff Details Tabs */}
+          <Tabs defaultValue="gates" className="w-full">
+            <TabsList className="grid grid-cols-2 bg-muted/50 p-1 rounded-md border border-border">
+              <TabsTrigger value="gates" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><Radio className="h-3.5 w-3.5 text-primary" /> Turnstiles & Gates</TabsTrigger>
+              <TabsTrigger value="staff" className="font-semibold text-xs py-2 rounded flex items-center gap-1.5"><HardHat className="h-3.5 w-3.5 text-primary" /> Ground Personnel Roster</TabsTrigger>
+            </TabsList>
+            
+            {/* Gates panel */}
+            <TabsContent value="gates" className="mt-4">
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border font-bold">
+                        <th className="p-3">Gate Name</th>
+                        <th className="p-3">Operational Status</th>
+                        <th className="p-3">Wait Time</th>
+                        <th className="p-3">Flow Rate</th>
+                        <th className="p-3">Security Lanes</th>
+                        <th className="p-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.gates.map(gate => (
+                        <tr key={gate.id} className="border-b border-border hover:bg-muted/10">
+                          <td className="p-3 font-semibold">{gate.name}</td>
+                          <td className="p-3">
+                            <Badge 
+                              className={
+                                gate.status === "Open" 
+                                  ? "bg-emerald-100 text-emerald-800" 
+                                  : gate.status === "Congested" 
+                                    ? "bg-amber-100 text-amber-800" 
+                                    : "bg-rose-100 text-rose-800"
+                              }
+                            >
+                              {gate.status}
+                            </Badge>
+                          </td>
+                          <td className="p-3 font-medium">{gate.wait_time} mins</td>
+                          <td className="p-3 text-muted-foreground">{gate.flow_rate} people/min</td>
+                          <td className="p-3 text-muted-foreground">{gate.security_lanes_active}/{gate.security_lanes_total} Active</td>
+                          <td className="p-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => {
+                                setEditingGateId(gate.id);
+                                setEditStatus(gate.status);
+                                setEditWaitTime(gate.wait_time);
+                              }}
+                              className="h-7 text-[10px] px-2"
+                            >
+                              Edit Status
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Staff roster panel */}
+            <TabsContent value="staff" className="mt-4">
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border font-bold">
+                        <th className="p-3">Staff Member</th>
+                        <th className="p-3">Role</th>
+                        <th className="p-3">Assigned Zone</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Primary Tasks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.staff.map(staff => (
+                        <tr key={staff.id} className="border-b border-border hover:bg-muted/10">
+                          <td className="p-3 font-semibold">{staff.name}</td>
+                          <td className="p-3 text-muted-foreground">{staff.role}</td>
+                          <td className="p-3 font-medium">{staff.zone}</td>
+                          <td className="p-3">
+                            <Badge 
+                              className={
+                                staff.status === "Active" 
+                                  ? "bg-emerald-100 text-emerald-800" 
+                                  : staff.status === "Dispatched" 
+                                    ? "bg-rose-100 text-rose-800" 
+                                    : "bg-slate-100 text-slate-800"
+                              }
+                            >
+                              {staff.status}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-muted-foreground max-w-[200px] truncate" title={staff.tasks.join(", ")}>
+                            {staff.tasks[0] || "No assigned tasks"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
