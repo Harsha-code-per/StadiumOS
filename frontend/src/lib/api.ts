@@ -55,27 +55,31 @@ export interface HealthStatus {
   model_cascade_enabled?: boolean;
 }
 
-// Fetch helper with timeout and error wrapping
-async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+// Low-level fetch with timeout and error wrapping
+async function fetchAPI<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  timeoutMs = 10000
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers = {
     "Content-Type": "application/json",
     ...options.headers,
   };
-  
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-    
     const response = await fetch(url, {
       ...options,
       headers,
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
       if (response.status === 429) {
         throw new Error("Rate limit exceeded. Please wait a moment before trying again.");
@@ -83,13 +87,41 @@ async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise
       const errBody = await response.json().catch(() => ({}));
       throw new Error(errBody.detail || `Server responded with status ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error: any) {
+    clearTimeout(timeoutId);
     if (error.name === "AbortError") {
-      throw new Error("Request timed out. Please check your backend service connection.");
+      throw new Error("Request timed out. The backend may be waking up — please retry.");
     }
     throw error;
+  }
+}
+
+/**
+ * Fetch with one automatic retry on timeout/network errors.
+ * Used for AI chat endpoints that may encounter Azure cold-start delays.
+ */
+async function fetchAPIWithRetry<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  timeoutMs = 25000
+): Promise<T> {
+  try {
+    return await fetchAPI<T>(endpoint, options, timeoutMs);
+  } catch (err: any) {
+    const isRetryable =
+      err.name === "AbortError" ||
+      err.message?.includes("timed out") ||
+      err.message?.includes("fetch") ||
+      err.message?.includes("network");
+
+    if (isRetryable) {
+      // Wait 1.5s then retry once
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return await fetchAPI<T>(endpoint, options, timeoutMs);
+    }
+    throw err;
   }
 }
 
@@ -114,7 +146,7 @@ export const api = {
   },
 
   async reportIncident(location: string, description: string): Promise<Incident> {
-    return fetchAPI<Incident>("/api/incidents", {
+    return fetchAPIWithRetry<Incident>("/api/incidents", {
       method: "POST",
       body: JSON.stringify({ location, description }),
     });
@@ -153,20 +185,28 @@ export const api = {
   },
 
   async generatePAAnnouncement(incidentId: string): Promise<{ en: string; es: string; fr: string }> {
-    return fetchAPI<{ en: string; es: string; fr: string }>(`/api/incidents/${incidentId}/announcement`, {
-      method: "POST",
-    });
+    return fetchAPIWithRetry<{ en: string; es: string; fr: string }>(
+      `/api/incidents/${incidentId}/announcement`,
+      { method: "POST" }
+    );
   },
 
-  async copilotChat(role: "command-center" | "ground-crew" | "fan", query: string, staffId?: string): Promise<{ answer: string }> {
-    return fetchAPI<{ answer: string }>("/api/copilot/chat", {
+  async copilotChat(
+    role: "command-center" | "ground-crew" | "fan",
+    query: string,
+    staffId?: string
+  ): Promise<{ answer: string }> {
+    // Use longer timeout + retry for AI chat (Azure cold-start can take 10–25s)
+    return fetchAPIWithRetry<{ answer: string }>("/api/copilot/chat", {
       method: "POST",
       body: JSON.stringify({ role, query, staff_id: staffId }),
     });
   },
 
-  async simulateEvent(eventType: "crowd_surge" | "medical" | "outage" | "vip_arrival"): Promise<{ message: string; incident: Incident }> {
-    return fetchAPI<{ message: string; incident: Incident }>("/api/simulate", {
+  async simulateEvent(
+    eventType: "crowd_surge" | "medical" | "outage" | "vip_arrival"
+  ): Promise<{ message: string; incident: Incident }> {
+    return fetchAPIWithRetry<{ message: string; incident: Incident }>("/api/simulate", {
       method: "POST",
       body: JSON.stringify({ event_type: eventType }),
     });
@@ -177,5 +217,5 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ task_index: taskIndex, completed }),
     });
-  }
+  },
 };

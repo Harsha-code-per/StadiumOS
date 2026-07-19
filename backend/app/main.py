@@ -18,10 +18,13 @@ from app.gemini_client import triage_incident, generate_pa_announcement, ask_cop
 
 app = FastAPI(title="Stadium AI Co-Pilot Backend", version="1.0.0")
 
-# CORS setup
+# CORS setup — restrict to the actual deployed Vercel frontend origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://stadium-os-chi.vercel.app",
+        "http://localhost:3000",  # Allow local dev
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

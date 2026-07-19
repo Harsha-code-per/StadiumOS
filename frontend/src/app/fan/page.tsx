@@ -2,26 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { api, DashboardData, Gate, Zone } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Ticket, AlertTriangle, Bot, Compass } from "lucide-react";
+import { Zap, Ticket, AlertTriangle, Compass } from "lucide-react";
+import ChatWidget from "@/components/ChatWidget";
 
 export default function FanPortal() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [selectedStandId, setSelectedStandId] = useState<string>("stand_b"); // default Stand B
   const [activeStand, setActiveStand] = useState<Zone | null>(null);
-
-  // Chat States
-  const [chatInput, setChatInput] = useState("");
-  const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Welcome! I am your AI Stadium Assistant. I have live access to crowd levels and gate traffic. Ask me for the fastest routes or closest gates." },
-    { sender: "user", text: "Which gate is fastest to enter Stand B right now?" },
-    { sender: "copilot", text: "The gates serving Stand B are Gate 2 and Gate 3. Gate 2 has a high wait time of 48 minutes. I recommend using Gate 3, which is open with a wait time of only 8 minutes." }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -29,8 +19,8 @@ export default function FanPortal() {
       setDashboard(res);
       const stand = res.zones.find(z => z.id === selectedStandId);
       if (stand) setActiveStand(stand);
-    } catch (err) {
-      console.error("Failed to load fan dashboard", err);
+    } catch {
+      // fail silently — dashboard data updates on next poll
     }
   };
 
@@ -39,24 +29,6 @@ export default function FanPortal() {
     const interval = setInterval(loadData, 4000); // Poll every 4 seconds to sync gate queues
     return () => clearInterval(interval);
   }, [selectedStandId]);
-
-  const handleSendChat = async (textToSend?: string) => {
-    const text = textToSend || chatInput;
-    if (!text.trim()) return;
-
-    setChatLog(prev => [...prev, { sender: "user", text }]);
-    if (!textToSend) setChatInput("");
-    setChatLoading(true);
-
-    try {
-      const res = await api.copilotChat("fan", text);
-      setChatLog(prev => [...prev, { sender: "copilot", text: res.answer }]);
-    } catch (err: any) {
-      setChatLog(prev => [...prev, { sender: "copilot", text: `Error: ${err.message}` }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
 
   // Logic to calculate best gate for a selected stand
   const getBestGateForStand = () => {
@@ -231,81 +203,18 @@ export default function FanPortal() {
 
         </div>
 
-        {/* Right Side: Chat Assistant (5 cols) */}
-        <div className="md:col-span-5">
-          <Card className="h-[530px] flex flex-col">
-            <CardHeader className="py-4">
-              <CardTitle className="text-base font-bold flex items-center gap-1.5"><Bot className="h-5 w-5 text-primary" /> Multilingual Fan Assistant</CardTitle>
-              <CardDescription className="text-xs">
-                Ask wayfinding questions in English, Spanish, or French.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto px-4 py-0 space-y-2.5">
-              {chatLog.map((chat, idx) => (
-                <div 
-                  key={idx} 
-                  className={`p-2.5 rounded text-xs leading-relaxed max-w-[90%] ${
-                    chat.sender === "user" 
-                      ? "bg-primary text-white ml-auto" 
-                      : "bg-muted text-foreground mr-auto"
-                  }`}
-                >
-                  <p>{chat.text}</p>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="bg-muted text-muted-foreground mr-auto p-2.5 rounded text-xs italic animate-pulse">
-                  Assistant checking live traffic data...
-                </div>
-              )}
-            </CardContent>
-
-            {/* Quick Prompts */}
-            <div className="px-4 py-1.5 border-t border-border bg-muted/20 flex flex-wrap gap-1">
-              <button 
-                onClick={() => handleSendChat("I am seated in Stand B. Which gate is less congested to exit right now?")}
-                className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-              >
-                🚪 Exit from Stand B?
-              </button>
-              <button 
-                onClick={() => handleSendChat("Which gate has the fastest entry wait time at this moment?")}
-                className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-              >
-                <span className="flex items-center gap-1"><Ticket className="h-3 w-3" /> Fastest Entry Gate?</span>
-              </button>
-              <button 
-                onClick={() => handleSendChat("¿Hay alguna puerta congestionada actualmente y qué opciones tengo?")}
-                className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-              >
-                🇲🇽 ¿Puertas lentas? (ES)
-              </button>
-            </div>
-
-            <CardFooter className="p-3 border-t border-border bg-card">
-              <form 
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleSendChat();
-                }} 
-                className="flex w-full items-center gap-2"
-              >
-                <Input
-                  placeholder="Ask a wayfinding question..."
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  disabled={chatLoading}
-                  className="h-8 text-xs bg-background"
-                />
-                <Button type="submit" size="sm" disabled={chatLoading} className="h-8 px-3 text-xs bg-primary hover:bg-primary/95 text-white">
-                  Send
-                </Button>
-              </form>
-            </CardFooter>
-          </Card>
-        </div>
-
       </div>
+
+      {/* Floating AI Fan Assistant Chat */}
+      <ChatWidget
+        role="fan"
+        placeholder="Ask a wayfinding question..."
+        suggestions={[
+          { label: "🚪 Exit from Stand B?", query: "I am seated in Stand B. Which gate is less congested to exit right now?" },
+          { label: "🎫 Fastest Entry Gate?", query: "Which gate has the fastest entry wait time at this moment?" },
+          { label: "🇲🇽 ¿Puertas lentas? (ES)", query: "¿Hay alguna puerta congestionada actualmente y qué opciones tengo?" },
+        ]}
+      />
     </div>
   );
 }

@@ -3,7 +3,8 @@
 A unified, real-time stadium operations and wayfinding platform built for the **FIFA World Cup 2026 Stadium Operations Challenge (Challenge 4)**. It bridges the gap between the Control Room, Field Crew, and Fans under a single, secure backend reasoning layer.
 
 ### Live Deployed Link
-🌐 **[Live Demo URL](https://stadium-os-frontend.vercel.app)** *(Placeholder - deploy your Next.js and FastAPI services and insert links here)*
+🌐 **[stadium-os-chi.vercel.app](https://stadium-os-chi.vercel.app)** — Frontend (Vercel)
+🗥️ **Backend API**: `https://stadiumos-backend-hk.azurewebsites.net` (Azure App Service, Python 3.11 + FastAPI)
 
 ---
 
@@ -20,6 +21,20 @@ A unified, real-time stadium operations and wayfinding platform built for the **
 
 ### Why "Smart Stadiums & Tournament Operations" (Challenge 4)?
 Stadium logistics during a major tournament represent complex bottlenecks: gate congestion, emergency incident triages, and multilingual crowd control are critical, high-risk points of failure. Solving this requires a **unified intelligence layer** that syncs operators, field staff, and public fans in real-time.
+
+### Challenge Brief Angle Coverage
+
+This submission explicitly addresses the following challenge brief angles:
+
+| Angle | Implementation |
+|-------|----------------|
+| **Navigation & Wayfinding** | Fan Portal: Live gate wait-time board, AI best-gate recommender, and multilingual chat that routes fans to the least-congested gate in real-time |
+| **Crowd Management** | Command Center: Visual SVG crowd density map with per-stand heat levels, one-click scenario simulations (crowd surge, VIP arrival) triggering AI triage |
+| **Multilingual Assistance** | All AI chat responds in the fan's language (EN/ES/FR auto-detected). Trilingual PA Announcement generator creates public address scripts in all three FIFA 2026 host languages |
+| **Operational Intelligence** | Incident desk with AI-generated category, severity, recommended staff, and a one-sentence justification. Cascading Gemini model fallback for high availability |
+| **Real-Time Decision Support** | Dashboard polls every 4 seconds. Simulation engine mutates state and immediately re-triages. Gate wait times auto-update across all views |
+| **Transportation & Accessibility** | Gate flow-rate editor lets operators manage turnstile throughput. ARIA live region announces new incidents to screen readers. Keyboard navigation throughout |
+| **Sustainability** | Compact 1.3MB repository, lightweight polling (not aggressive WebSockets), and a stateless mock-data layer that avoids database costs |
 
 ### Our Approach: The Unified Co-Pilot
 Instead of siloed applications, Stadium AI Co-Pilot connects all three views to a single FastAPI reasoning engine powered by Gemini. 

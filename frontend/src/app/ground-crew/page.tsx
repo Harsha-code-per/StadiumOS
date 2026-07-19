@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { api, DashboardData, Staff, Incident } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HardHat, AlertTriangle, Bot } from "lucide-react";
+import { HardHat, AlertTriangle } from "lucide-react";
+import ChatWidget from "@/components/ChatWidget";
 
 export default function GroundCrew() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
@@ -20,14 +20,6 @@ export default function GroundCrew() {
   const [reporting, setReporting] = useState(false);
   const [reportSuccess, setReportSuccess] = useState<string | null>(null);
 
-  // Chat States
-  const [chatInput, setChatInput] = useState("");
-  const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Ground Crew assistance active. Ask me for emergency procedures, closest resources, or duties." },
-    { sender: "user", text: "What's the protocol for a medical emergency at Stand B?" },
-    { sender: "copilot", text: "Protocol for Medical Emergency: 1. Stay with the patient and ensure their immediate area is clear. 2. Call the Command Center to report details. 3. Coordinate with incoming medical responders to guide them to Stand B." }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -35,8 +27,8 @@ export default function GroundCrew() {
       setDashboard(res);
       const staff = res.staff.find(s => s.id === selectedStaffId);
       if (staff) setActiveStaff(staff);
-    } catch (err) {
-      console.error("Failed to load crew data", err);
+    } catch {
+      // fail silently — dashboard data updates on next poll
     }
   };
 
@@ -78,24 +70,7 @@ export default function GroundCrew() {
     }
   };
 
-  // Chat
-  const handleSendChat = async (textToSend?: string) => {
-    const text = textToSend || chatInput;
-    if (!text.trim() || !activeStaff) return;
 
-    setChatLog(prev => [...prev, { sender: "user", text }]);
-    if (!textToSend) setChatInput("");
-    setChatLoading(true);
-
-    try {
-      const res = await api.copilotChat("ground-crew", text, activeStaff.id);
-      setChatLog(prev => [...prev, { sender: "copilot", text: res.answer }]);
-    } catch (err: any) {
-      setChatLog(prev => [...prev, { sender: "copilot", text: `Error: ${err.message}` }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -112,10 +87,7 @@ export default function GroundCrew() {
           <div className="w-full sm:w-[240px]">
             <Select 
               value={selectedStaffId} 
-              onValueChange={val => {
-                setSelectedStaffId(val || "");
-                setChatLog([{ sender: "copilot", text: "Ground Crew assistance active. Ask me for emergency procedures, closest resources, or duties." }]);
-              }}
+              onValueChange={val => setSelectedStaffId(val || "")}
             >
               <SelectTrigger className="h-9 text-xs bg-background">
                 <SelectValue placeholder="Select staff..." />
@@ -279,83 +251,20 @@ export default function GroundCrew() {
 
           </div>
 
-          {/* Chat co-pilot (5 cols) */}
-          <div className="md:col-span-5">
-            <Card className="h-[520px] flex flex-col">
-              <CardHeader className="py-4">
-                <CardTitle className="text-base font-bold flex items-center gap-1.5">
-                  <Bot className="h-5 w-5 text-primary" /> Local Crew Co-Pilot
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Ask for emergency protocols, supervisor contacts, or local stand issues.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto px-4 py-0 space-y-2.5">
-                {chatLog.map((chat, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`p-2.5 rounded text-xs leading-relaxed max-w-[90%] ${
-                      chat.sender === "user" 
-                        ? "bg-primary text-white ml-auto" 
-                        : "bg-muted text-foreground mr-auto"
-                    }`}
-                  >
-                    <p>{chat.text}</p>
-                  </div>
-                ))}
-                {chatLoading && (
-                  <div className="bg-muted text-muted-foreground mr-auto p-2.5 rounded text-xs italic animate-pulse">
-                    Co-Pilot consulting procedures...
-                  </div>
-                )}
-              </CardContent>
-
-              {/* Quick procedures */}
-              <div className="px-4 py-1.5 border-t border-border bg-muted/20 flex flex-wrap gap-1">
-                <button 
-                  onClick={() => handleSendChat("What is the official procedure for a lost child in my zone?")}
-                  className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-                >
-                  👶 Lost Child Protocol
-                </button>
-                <button 
-                  onClick={() => handleSendChat("Where is the nearest AED device and medical stand located?")}
-                  className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-                >
-                  ❤️ Find AED / First Aid
-                </button>
-                <button 
-                  onClick={() => handleSendChat("Who is the supervisor on duty and how can I reach them?")}
-                  className="text-[9px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left"
-                >
-                  📞 Contact Supervisor
-                </button>
-              </div>
-
-              <CardFooter className="p-3 border-t border-border bg-card">
-                <form 
-                  onSubmit={e => {
-                    e.preventDefault();
-                    handleSendChat();
-                  }} 
-                  className="flex w-full items-center gap-2"
-                >
-                  <Input
-                    placeholder="Ask crew co-pilot..."
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    disabled={chatLoading}
-                    className="h-8 text-xs bg-background"
-                  />
-                  <Button type="submit" size="sm" disabled={chatLoading} className="h-8 px-3 text-xs bg-primary hover:bg-primary/95 text-white">
-                    Ask
-                  </Button>
-                </form>
-              </CardFooter>
-            </Card>
-          </div>
         </div>
       )}
+
+      {/* Floating AI Co-Pilot Chat (staff-aware) */}
+      <ChatWidget
+        role="ground-crew"
+        staffId={activeStaff?.id}
+        placeholder="Ask crew co-pilot..."
+        suggestions={[
+          { label: "👶 Lost Child Protocol", query: "What is the official procedure for a lost child in my zone?" },
+          { label: "❤️ Find AED / First Aid", query: "Where is the nearest AED device and medical stand located?" },
+          { label: "📞 Contact Supervisor", query: "Who is the supervisor on duty and how can I reach them?" },
+        ]}
+      />
     </div>
   );
 }

@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef } from "react";
 import { api, DashboardData, Incident, Gate, Staff, Zone } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Radio, HardHat, Ticket, Zap, AlertTriangle, Bot, Users, HeartPulse, Crown, Info, RefreshCw } from "lucide-react";
+import { Radio, HardHat, Zap, AlertTriangle, Bot, Users, HeartPulse, Crown, Info } from "lucide-react";
+import ChatWidget from "@/components/ChatWidget";
 
 export default function CommandCenter() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -27,14 +28,7 @@ export default function CommandCenter() {
   const [ariaAnnouncement, setAriaAnnouncement] = useState("");
   const prevIncidentCount = useRef<number>(0);
 
-  // Copilot Chat States
-  const [chatInput, setChatInput] = useState("");
-  const [chatLog, setChatLog] = useState<{ sender: "user" | "copilot"; text: string }[]>([
-    { sender: "copilot", text: "Welcome to the Command Center. I have live access to gates, crowd density, and staff roster. Ask me for recommendations or dispatch suggestions." },
-    { sender: "user", text: "What is the current bottleneck at Gate 2 and how do we resolve it?" },
-    { sender: "copilot", text: "Gate 2 currently has a high wait time of 48 minutes with only 4 of 6 security lanes active. Recommending deploying Officer Sarah Jenkins (Security) from adjacent Stand A (North) to open the remaining lanes and relieve crowd backlog." }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
+
 
   // Gate editor states
   const [editingGateId, setEditingGateId] = useState<string | null>(null);
@@ -102,9 +96,6 @@ export default function CommandCenter() {
     try {
       await api.resetData();
       await fetchDashboard(false);
-      setChatLog([
-        { sender: "copilot", text: "Stadium data has been reset to baseline parameters." }
-      ]);
     } catch (err: any) {
       alert(`Reset failed: ${err.message}`);
     } finally {
@@ -162,24 +153,7 @@ export default function CommandCenter() {
     }
   };
 
-  // Chat queries
-  const handleSendChat = async (textToSend?: string) => {
-    const text = textToSend || chatInput;
-    if (!text.trim()) return;
 
-    setChatLog(prev => [...prev, { sender: "user", text }]);
-    if (!textToSend) setChatInput("");
-    setChatLoading(true);
-
-    try {
-      const res = await api.copilotChat("command-center", text);
-      setChatLog(prev => [...prev, { sender: "copilot", text: res.answer }]);
-    } catch (err: any) {
-      setChatLog(prev => [...prev, { sender: "copilot", text: `Error: ${err.message}` }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
 
   // Edit Gate parameters
   const handleUpdateGate = async (e: React.FormEvent) => {
@@ -305,7 +279,7 @@ export default function CommandCenter() {
             <CardContent className="flex justify-center bg-muted/20 py-4 relative">
               {data ? (
                 <div className="w-full max-w-lg">
-                  <svg viewBox="0 0 500 350" className="w-full h-auto">
+                  <svg viewBox="-20 -10 560 390" className="w-full h-auto">
                     {/* Pitch markings */}
                     <rect x="150" y="100" width="200" height="150" fill="#a7f3d0" stroke="#10b981" strokeWidth="2" rx="4" />
                     <line x1="250" y1="100" x2="250" y2="250" stroke="#10b981" strokeWidth="2" />
@@ -318,8 +292,8 @@ export default function CommandCenter() {
                         data.zones.find(z => z.id === "stand_a")?.density || "Low"
                       )} stroke-2`}
                     />
-                    <text x="250" y="50" textAnchor="middle" className="text-[10px] font-bold fill-foreground">
-                      Stand A (North): {data.zones.find(z => z.id === "stand_a")?.density}
+                    <text x="250" y="-2" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+                      Stand A — {data.zones.find(z => z.id === "stand_a")?.density}
                     </text>
 
                     {/* Stand B (East) */}
@@ -329,8 +303,8 @@ export default function CommandCenter() {
                         data.zones.find(z => z.id === "stand_b")?.density || "Low"
                       )} stroke-2`}
                     />
-                    <text x="440" y="175" textAnchor="middle" className="text-[10px] font-bold fill-foreground" transform="rotate(90 440 175)">
-                      Stand B (East): {data.zones.find(z => z.id === "stand_b")?.density}
+                    <text x="497" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(90 497 175)">
+                      Stand B — {data.zones.find(z => z.id === "stand_b")?.density}
                     </text>
 
                     {/* Stand C (South) */}
@@ -340,8 +314,8 @@ export default function CommandCenter() {
                         data.zones.find(z => z.id === "stand_c")?.density || "Low"
                       )} stroke-2`}
                     />
-                    <text x="250" y="315" textAnchor="middle" className="text-[10px] font-bold fill-foreground">
-                      Stand C (South): {data.zones.find(z => z.id === "stand_c")?.density}
+                    <text x="250" y="363" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+                      Stand C — {data.zones.find(z => z.id === "stand_c")?.density}
                     </text>
 
                     {/* Stand D (West) */}
@@ -351,8 +325,8 @@ export default function CommandCenter() {
                         data.zones.find(z => z.id === "stand_d")?.density || "Low"
                       )} stroke-2`}
                     />
-                    <text x="60" y="175" textAnchor="middle" className="text-[10px] font-bold fill-foreground" transform="rotate(-90 60 175)">
-                      Stand D (West): {data.zones.find(z => z.id === "stand_d")?.density}
+                    <text x="-8" y="175" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b" transform="rotate(-90 -8 175)">
+                      Stand D — {data.zones.find(z => z.id === "stand_d")?.density}
                     </text>
 
                     {/* Stand E (Club/VIP Center) */}
@@ -709,74 +683,19 @@ export default function CommandCenter() {
             </Card>
           )}
 
-          {/* AI Co-Pilot Console */}
-            <Card className="h-[380px] flex flex-col">
-            <CardHeader className="py-3">
-              <CardTitle className="text-base font-bold flex items-center gap-1.5"><Bot className="h-5 w-5 text-primary" /> Command Co-Pilot Chat</CardTitle>
-              <CardDescription className="text-xs">
-                Inquire about live routing alternatives, staff counts, or procedures.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto px-4 py-0 space-y-2.5" id="cc-chat-box">
-              {chatLog.map((chat, idx) => (
-                <div 
-                  key={idx} 
-                  className={`p-2.5 rounded text-xs leading-relaxed max-w-[90%] ${
-                    chat.sender === "user" 
-                      ? "bg-primary text-white ml-auto" 
-                      : "bg-muted text-foreground mr-auto"
-                  }`}
-                >
-                  <p>{chat.text}</p>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="bg-muted text-muted-foreground mr-auto p-2.5 rounded text-xs italic animate-pulse">
-                  Co-Pilot is analyzing stadium data...
-                </div>
-              )}
-            </CardContent>
-            
-            {/* Quick Prompt Suggestions */}
-            <div className="px-4 py-1.5 border-t border-border bg-muted/20 flex flex-wrap gap-1.5">
-              <button 
-                onClick={() => handleSendChat("Which gates are currently congested and what are the alternative entries?")}
-                className="text-[10px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left transition-colors"
-              >
-                🔍 Congested Gates?
-              </button>
-              <button 
-                onClick={() => handleSendChat("Who is the closest security officer we can dispatch to Stand B crowd surge?")}
-                className="text-[10px] px-2 py-0.5 border border-border bg-background hover:bg-muted text-muted-foreground font-semibold rounded text-left transition-colors flex items-center gap-1"
-              >
-                <HardHat className="h-3 w-3 text-muted-foreground" /> Security for B?
-              </button>
-            </div>
-
-            <CardFooter className="p-3 border-t border-border bg-card">
-              <form 
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleSendChat();
-                }} 
-                className="flex w-full items-center gap-2"
-              >
-                <Input
-                  placeholder="Ask the Co-Pilot..."
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  disabled={chatLoading}
-                  className="h-8 text-xs bg-background"
-                />
-                <Button type="submit" size="sm" disabled={chatLoading} className="h-8 px-3 text-xs bg-primary hover:bg-primary/95 text-white">
-                  Send
-                </Button>
-              </form>
-            </CardFooter>
-          </Card>
-
         </div>
       </div>
+
+      {/* Floating AI Co-Pilot Chat */}
+      <ChatWidget
+        role="command-center"
+        placeholder="Ask the Command Co-Pilot..."
+        suggestions={[
+          { label: "🔍 Congested Gates?", query: "Which gates are currently congested and what are the alternative entries?" },
+          { label: "👮 Security for Stand B?", query: "Who is the closest security officer we can dispatch to Stand B crowd surge?" },
+          { label: "📊 Incident summary", query: "Summarize the current active incidents and their priority levels." },
+        ]}
+      />
     </div>
   );
 }
