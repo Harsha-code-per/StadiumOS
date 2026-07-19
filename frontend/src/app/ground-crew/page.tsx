@@ -22,6 +22,16 @@ export default function GroundCrew() {
   const [reporting, setReporting] = useState(false);
   const [reportSuccess, setReportSuccess] = useState<string | null>(null);
 
+  // Toast notifications state
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showNotification = (message: string, type: "success" | "error" | "info" = "info") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(prev => prev && prev.message === message ? null : prev);
+    }, 5000);
+  };
+
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -71,7 +81,7 @@ export default function GroundCrew() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to update task.";
-      alert(`Failed to update task: ${errorMessage}`);
+      showNotification(`Failed to update task: ${errorMessage}`, "error");
     }
   };
 
@@ -90,7 +100,7 @@ export default function GroundCrew() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Reporting failed.";
-      alert(`Reporting failed: ${errorMessage}`);
+      showNotification(`Reporting failed: ${errorMessage}`, "error");
     } finally {
       setReporting(false);
     }
@@ -332,6 +342,20 @@ export default function GroundCrew() {
           { label: "📞 Contact Supervisor", query: "Who is the supervisor on duty and how can I reach them?" },
         ]}
       />
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 ${
+          notification.type === "success" 
+            ? "bg-emerald-950/95 border-emerald-500/30 text-emerald-200" 
+            : notification.type === "error"
+            ? "bg-rose-950/95 border-rose-500/30 text-rose-200"
+            : "bg-slate-900/95 border-slate-700/50 text-slate-200"
+        }`}>
+          <AlertTriangle className={`h-5 w-5 ${notification.type === "success" ? "text-emerald-400" : notification.type === "error" ? "text-rose-400" : "text-sky-400"}`} />
+          <span className="text-sm font-medium">{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="ml-2 hover:opacity-75 text-xs font-bold px-2 py-1 rounded bg-white/10">✕</button>
+        </div>
+      )}
     </div>
   );
 }

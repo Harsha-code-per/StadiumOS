@@ -28,6 +28,16 @@ export default function CommandCenter() {
   const [ariaAnnouncement, setAriaAnnouncement] = useState("");
   const prevIncidentCount = useRef<number>(0);
 
+  // Toast notifications state
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showNotification = (message: string, type: "success" | "error" | "info" = "info") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(prev => prev && prev.message === message ? null : prev);
+    }, 5000);
+  };
+
   // Gate editor states
   const [editingGateId, setEditingGateId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<string>("");
@@ -97,7 +107,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Unknown simulation error.";
-      alert(`Simulation failed: ${errorMessage}`);
+      showNotification(`Simulation failed: ${errorMessage}`, "error");
     } finally {
       setSimulating(null);
     }
@@ -115,7 +125,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Unknown reset error.";
-      alert(`Reset failed: ${errorMessage}`);
+      showNotification(`Reset failed: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -126,7 +136,7 @@ export default function CommandCenter() {
     if (!selectedIncident) return;
     const staffId = selectedIncident.recommended_staff_id;
     if (!staffId) {
-      alert("No recommended staff member suggested by AI Classifier.");
+      showNotification("No recommended staff member suggested by AI Classifier.", "error");
       return;
     }
 
@@ -137,7 +147,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Dispatch failed.";
-      alert(`Dispatch failed: ${errorMessage}`);
+      showNotification(`Dispatch failed: ${errorMessage}`, "error");
     } finally {
       setDispatching(false);
     }
@@ -154,7 +164,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Resolution failed.";
-      alert(`Resolution failed: ${errorMessage}`);
+      showNotification(`Resolution failed: ${errorMessage}`, "error");
     } finally {
       setResolving(false);
     }
@@ -171,7 +181,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Announcement generation failed.";
-      alert(`Announcement generation failed: ${errorMessage}`);
+      showNotification(`Announcement generation failed: ${errorMessage}`, "error");
     } finally {
       setDrafting(false);
     }
@@ -189,7 +199,7 @@ export default function CommandCenter() {
     } catch (err: unknown) {
       const errorObj = err as Record<string, unknown> | null;
       const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to update gate.";
-      alert(`Failed to update gate: ${errorMessage}`);
+      showNotification(`Failed to update gate: ${errorMessage}`, "error");
     }
   };
 
@@ -755,6 +765,20 @@ export default function CommandCenter() {
           { label: "📊 Incident summary", query: "Summarize the current active incidents and their priority levels." },
         ]}
       />
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 ${
+          notification.type === "success" 
+            ? "bg-emerald-950/95 border-emerald-500/30 text-emerald-200" 
+            : notification.type === "error"
+            ? "bg-rose-950/95 border-rose-500/30 text-rose-200"
+            : "bg-slate-900/95 border-slate-700/50 text-slate-200"
+        }`}>
+          <AlertTriangle className={`h-5 w-5 ${notification.type === "success" ? "text-emerald-400" : notification.type === "error" ? "text-rose-400" : "text-sky-400"}`} />
+          <span className="text-sm font-medium">{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="ml-2 hover:opacity-75 text-xs font-bold px-2 py-1 rounded bg-white/10">✕</button>
+        </div>
+      )}
     </div>
   );
 }

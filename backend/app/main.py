@@ -11,10 +11,15 @@ from app.schemas import (
     IncidentDispatchInput,
     ChatRequestInput,
     SimulationInput,
-    TaskUpdateInput
+    TaskUpdateInput,
 )
 from app.data_manager import data_manager
-from app.gemini_client import triage_incident, generate_pa_announcement, ask_copilot
+from app.gemini_client import (
+    triage_incident,
+    generate_pa_announcement,
+    ask_copilot,
+    GeminiRateLimitException,
+)
 
 app = FastAPI(title="Stadium AI Co-Pilot Backend", version="1.0.0")
 
@@ -34,10 +39,11 @@ app.add_middleware(
 IP_LIMITS = {}  # ip -> list of timestamps
 CHAT_COOLDOWNS = {}  # ip -> last_timestamp
 
+
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     path = request.url.path
-    
+
     # 3-second chat request cooldown to prevent rapid double-clicks
     if path.startswith("/api/copilot/chat"):
         ip = request.client.host if request.client else "unknown"
@@ -48,39 +54,41 @@ async def rate_limit_middleware(request: Request, call_next):
                 status_code=429,
                 content={
                     "error": "rate_limited",
-                    "message": "AI is temporarily busy — try again shortly."
-                }
+                    "message": "AI is temporarily busy — try again shortly.",
+                },
             )
         CHAT_COOLDOWNS[ip] = now
 
     # General rate limiting (max 30 requests per minute)
-    if path.startswith("/api/copilot/chat") or path.startswith("/api/incidents") or path.startswith("/api/simulate"):
+    if (
+        path.startswith("/api/copilot/chat")
+        or path.startswith("/api/incidents")
+        or path.startswith("/api/simulate")
+    ):
         ip = request.client.host if request.client else "unknown"
         now = time.time()
         timestamps = IP_LIMITS.setdefault(ip, [])
         IP_LIMITS[ip] = [t for t in timestamps if now - t < 60]
-        
+
         if len(IP_LIMITS[ip]) >= 30:
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests. Rate limit is 30 requests per minute."}
+                content={
+                    "detail": "Too many requests. Rate limit is 30 requests per minute."
+                },
             )
         IP_LIMITS[ip].append(now)
-        
+
     response = await call_next(request)
     return response
 
-from app.gemini_client import GeminiRateLimitException
 
 @app.exception_handler(GeminiRateLimitException)
 async def gemini_rate_limit_handler(request: Request, exc: GeminiRateLimitException):
     return JSONResponse(
-        status_code=429,
-        content={
-            "error": "rate_limited",
-            "message": str(exc)
-        }
+        status_code=429, content={"error": "rate_limited", "message": str(exc)}
     )
+
 
 @app.get("/api/health")
 def health_check():
@@ -89,13 +97,15 @@ def health_check():
         "status": "ok",
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "service": "StadiumOS Backend",
-        "model_cascade_enabled": True
+        "model_cascade_enabled": True,
     }
+
 
 @app.get("/api/dashboard")
 def get_dashboard_data():
     """Retrieve full stadium operational dashboard state."""
     return data_manager.get_all()
+
 
 @app.post("/api/reset")
 def reset_stadium_data():
@@ -103,8 +113,9 @@ def reset_stadium_data():
     reset_data = data_manager.reset()
     return {
         "message": "Stadium data successfully reset to baseline seed.",
-        "data": reset_data
+        "data": reset_data,
     }
+
 
 @app.post("/api/gates/update")
 def update_gate_status(payload: GateUpdateInput):
@@ -114,11 +125,14 @@ def update_gate_status(payload: GateUpdateInput):
         status=payload.status,
         flow_rate=payload.flow_rate,
         wait_time=payload.wait_time,
-        security_lanes_active=payload.security_lanes_active
+        security_lanes_active=payload.security_lanes_active,
     )
     if not updated_gate:
-        raise HTTPException(status_code=404, detail=f"Gate with id {payload.gate_id} not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Gate with id {payload.gate_id} not found."
+        )
     return updated_gate
+
 
 @app.post("/api/zones/update")
 def update_zone_density(payload: ZoneDensityUpdateInput):
@@ -126,65 +140,82 @@ def update_zone_density(payload: ZoneDensityUpdateInput):
     updated_zone = data_manager.update_zone_density(
         zone_id=payload.zone_id,
         density=payload.density,
-        current_count=payload.current_count
+        current_count=payload.current_count,
     )
     if not updated_zone:
-        raise HTTPException(status_code=404, detail=f"Zone with id {payload.zone_id} not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Zone with id {payload.zone_id} not found."
+        )
     return updated_zone
+
 
 @app.post("/api/incidents")
 async def report_incident(payload: IncidentReportInput):
     """
-    Report a new operational incident. 
+    Report a new operational incident.
     Triggers Gemini reasoning to automatically categorize, assess severity,
     recommend appropriate staff from roster, and provide reasoning explanation.
     """
     stadium_state = data_manager.get_all()
-    
+
     # Run Gemini AI classification
     triage_result = await triage_incident(payload.description, stadium_state)
-    
+
     category = triage_result.get("category", "Security")
     severity = triage_result.get("severity", "Medium")
-    ai_why = triage_result.get("ai_recommendation_why", "Recommended based on incident category.")
-    
+    ai_why = triage_result.get(
+        "ai_recommendation_why", "Recommended based on incident category."
+    )
+
     # Add incident with AI insights
     new_incident = data_manager.add_incident(
         category=category,
         severity=severity,
         location=payload.location,
         description=payload.description,
-        ai_why=ai_why
+        ai_why=ai_why,
     )
-    
+
     # Expose the AI recommended staff ID as a suggestion parameter (UI parses this)
     new_incident["recommended_staff_id"] = triage_result.get("recommended_staff_id")
-    
+
     return new_incident
+
 
 @app.post("/api/incidents/{incident_id}/dispatch")
 def dispatch_staff_to_incident(incident_id: str, payload: IncidentDispatchInput):
     """Dispatch specific ground staff roster members to an active incident."""
     updated_incident = data_manager.dispatch_staff(incident_id, payload.staff_ids)
     if not updated_incident:
-        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Incident {incident_id} not found."
+        )
     return updated_incident
+
 
 @app.post("/api/incidents/{incident_id}/resolve")
 def resolve_stadium_incident(incident_id: str):
     """Mark an incident resolved, releasing all dispatched staff back to active duty."""
     updated_incident = data_manager.resolve_incident(incident_id)
     if not updated_incident:
-        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Incident {incident_id} not found."
+        )
     return updated_incident
+
 
 @app.post("/api/staff/{staff_id}/task")
 def update_staff_task_status(staff_id: str, payload: TaskUpdateInput):
     """Update a specific staff checklist task item (complete/uncomplete)."""
-    updated_staff = data_manager.update_staff_task(staff_id, payload.task_index, payload.completed)
+    updated_staff = data_manager.update_staff_task(
+        staff_id, payload.task_index, payload.completed
+    )
     if not updated_staff:
-        raise HTTPException(status_code=404, detail=f"Staff with id {staff_id} or task index not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Staff with id {staff_id} or task index not found."
+        )
     return updated_staff
+
 
 @app.post("/api/incidents/{incident_id}/announcement")
 async def generate_pa_alert(incident_id: str):
@@ -195,12 +226,15 @@ async def generate_pa_alert(incident_id: str):
         if inc["id"] == incident_id:
             target_inc = inc
             break
-            
+
     if not target_inc:
-        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found.")
-        
+        raise HTTPException(
+            status_code=404, detail=f"Incident {incident_id} not found."
+        )
+
     announcements = await generate_pa_announcement(target_inc["description"])
     return announcements
+
 
 @app.post("/api/copilot/chat")
 async def copilot_chat(payload: ChatRequestInput):
@@ -214,9 +248,10 @@ async def copilot_chat(payload: ChatRequestInput):
         role=payload.role,
         user_query=payload.query,
         mock_data=stadium_state,
-        staff_id=payload.staff_id
+        staff_id=payload.staff_id,
     )
     return {"answer": answer}
+
 
 @app.post("/api/simulate")
 async def simulate_event(payload: SimulationInput):
@@ -225,13 +260,18 @@ async def simulate_event(payload: SimulationInput):
     triggering AI classifications and updates visible in dashboards.
     """
     event = payload.event_type
-    stadium_state = data_manager.get_all()
-    
+
     if event == "crowd_surge":
         # Mutate Stand B density to Critical, spike Gate 2 wait time
         data_manager.update_zone_density("stand_b", "Critical", 14850)
-        data_manager.update_gate("gate_2", status="Congested", flow_rate=12, wait_time=48, security_lanes_active=2)
-        
+        data_manager.update_gate(
+            "gate_2",
+            status="Congested",
+            flow_rate=12,
+            wait_time=48,
+            security_lanes_active=2,
+        )
+
         # Trigger automated incident
         description = "Sudden crowd surge in East Concourse outside Stand B. High backlog at Gate 2 security lanes."
         triage_res = await triage_incident(description, data_manager.get_all())
@@ -240,11 +280,11 @@ async def simulate_event(payload: SimulationInput):
             severity=triage_res.get("severity", "Critical"),
             location="Gate 2 & Stand B (East)",
             description=description,
-            ai_why=triage_res.get("ai_recommendation_why", "")
+            ai_why=triage_res.get("ai_recommendation_why", ""),
         )
         new_inc["recommended_staff_id"] = triage_res.get("recommended_staff_id")
         return {"message": "Simulated crowd surge in Stand B", "incident": new_inc}
-        
+
     elif event == "medical":
         # Report medical emergency at Gate 4
         description = "Fan collapsed in security queue at Gate 4. Reports severe chest pain and dizziness."
@@ -254,11 +294,11 @@ async def simulate_event(payload: SimulationInput):
             severity=triage_res.get("severity", "High"),
             location="Gate 4",
             description=description,
-            ai_why=triage_res.get("ai_recommendation_why", "")
+            ai_why=triage_res.get("ai_recommendation_why", ""),
         )
         new_inc["recommended_staff_id"] = triage_res.get("recommended_staff_id")
         return {"message": "Simulated medical emergency at Gate 4", "incident": new_inc}
-        
+
     elif event == "outage":
         # Report maintenance/outage at Stand D
         description = "Sudden localized power failure in Concession Area D12. Point-of-Sale registers and lights are completely offline."
@@ -268,11 +308,11 @@ async def simulate_event(payload: SimulationInput):
             severity=triage_res.get("severity", "Medium"),
             location="Stand D (West)",
             description=description,
-            ai_why=triage_res.get("ai_recommendation_why", "")
+            ai_why=triage_res.get("ai_recommendation_why", ""),
         )
         new_inc["recommended_staff_id"] = triage_res.get("recommended_staff_id")
         return {"message": "Simulated power failure at Stand D", "incident": new_inc}
-        
+
     elif event == "vip_arrival":
         # Simulate VIP crowd security escorts
         description = "Official VIP delegation motorcade arriving at Gate 1 VIP stand in 5 minutes. Needs perimeter clearance."
@@ -282,9 +322,9 @@ async def simulate_event(payload: SimulationInput):
             severity=triage_res.get("severity", "High"),
             location="Gate 1 (VIP)",
             description=description,
-            ai_why=triage_res.get("ai_recommendation_why", "")
+            ai_why=triage_res.get("ai_recommendation_why", ""),
         )
         new_inc["recommended_staff_id"] = triage_res.get("recommended_staff_id")
         return {"message": "Simulated VIP Arrival at Gate 1", "incident": new_inc}
-        
+
     return {"message": "Unknown simulation type."}

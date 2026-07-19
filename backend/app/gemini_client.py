@@ -15,6 +15,7 @@ logger = logging.getLogger("gemini_client")
 # [FIFA BRIEF ANGLE: SUSTAINABILITY] Keeps server resources and outbound overhead low
 HTTP_CLIENT = httpx.AsyncClient(timeout=30.0)
 
+
 def close_http_client():
     try:
         try:
@@ -25,11 +26,15 @@ def close_http_client():
     except Exception:
         pass
 
+
 atexit.register(close_http_client)
+
 
 class GeminiRateLimitException(Exception):
     """Exception raised when Gemini API keys are rate-limited or exhausted."""
+
     pass
+
 
 def sanitize_input(text: str, max_len: int = 300) -> str:
     """Sanitize and length-cap untrusted inputs to protect against injection."""
@@ -40,10 +45,9 @@ def sanitize_input(text: str, max_len: int = 300) -> str:
     text = text.replace("system instruction override", "")
     return text[:max_len].strip()
 
+
 async def call_gemini(
-    prompt: str,
-    system_instruction: str = "",
-    json_mode: bool = False
+    prompt: str, system_instruction: str = "", json_mode: bool = False
 ) -> str:
     """
     Calls Gemini API using httpx directly.
@@ -73,15 +77,17 @@ async def call_gemini(
 
     # Single primary model as requested
     model = "gemini-3.5-flash"
-    
+
     payload = {
         "contents": [{"parts": [{"text": f"User Input:\n{prompt}"}]}],
-        "systemInstruction": {"parts": [{"text": system_instruction}]} if system_instruction else None,
-        "generationConfig": {}
+        "systemInstruction": (
+            {"parts": [{"text": system_instruction}]} if system_instruction else None
+        ),
+        "generationConfig": {},
     }
     if not payload["systemInstruction"]:
         payload.pop("systemInstruction")
-    
+
     if json_mode:
         payload["generationConfig"]["responseMimeType"] = "application/json"
 
@@ -91,24 +97,28 @@ async def call_gemini(
         try:
             logger.info(f"Calling model {model} using key {idx+1}/{len(keys_to_try)}")
             response = await HTTP_CLIENT.post(url, json=payload)
-            
+
             if response.status_code == 200:
                 res_json = response.json()
                 text_content = res_json["candidates"][0]["content"]["parts"][0]["text"]
                 return text_content
-            
+
             elif response.status_code == 429:
                 logger.warning(f"Key {idx+1} hit rate limit (429).")
                 # Fall through to try next key immediately
             else:
-                logger.warning(f"Key {idx+1} returned status {response.status_code}: {response.text}")
+                logger.warning(
+                    f"Key {idx+1} returned status {response.status_code}: {response.text}"
+                )
                 # Fall through to try next key
         except Exception as e:
             logger.error(f"Failed calling key {idx+1}: {str(e)}")
             # Fall through to try next key
 
     # Both/all keys failed
-    raise GeminiRateLimitException("AI service is temporarily busy. Please try again in a moment.")
+    raise GeminiRateLimitException(
+        "AI service is temporarily busy. Please try again in a moment."
+    )
 
 
 # Role-based system instructions with prompt injection defenses
@@ -205,42 +215,45 @@ Output MUST be valid JSON only. Do not wrap in markdown code blocks.
 """
 
 
+def clean_json_output(res_text: str) -> str:
+    cleaned = res_text.strip()
+    if cleaned.startswith("```"):
+        first_newline = cleaned.find("\n")
+        if first_newline != -1:
+            cleaned = cleaned[first_newline:].strip()
+        else:
+            cleaned = cleaned[3:].strip()
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3].strip()
+    return cleaned
+
+
 async def triage_incident(description: str, mock_data: dict) -> dict:
     """Triage reported incident using Gemini, output category, severity, recommended staff, and reasoning."""
     staff_str = json.dumps(mock_data.get("staff", []), indent=1)
     zones_str = json.dumps(mock_data.get("zones", []), indent=1)
     gates_str = json.dumps(mock_data.get("gates", []), indent=1)
-    
+
     sys_instruction = TRIAGE_SYSTEM_INSTRUCTION.format(
-        staff_roster=staff_str,
-        stadium_zones=zones_str,
-        active_gates=gates_str
+        staff_roster=staff_str, stadium_zones=zones_str, active_gates=gates_str
     )
-    
+
     prompt = f"<user_untrusted_input>\n{description}\n</user_untrusted_input>"
     res_text = await call_gemini(prompt, sys_instruction, json_mode=True)
-    
-    res_text_clean = res_text.strip()
-    if res_text_clean.startswith("```json"):
-        res_text_clean = res_text_clean[7:]
-    if res_text_clean.endswith("```"):
-        res_text_clean = res_text_clean[:-3]
-    return json.loads(res_text_clean.strip())
+    return json.loads(clean_json_output(res_text))
+
 
 async def generate_pa_announcement(incident_desc: str) -> dict:
     """Generate trilingual PA script for an incident."""
     sys_instruction = PA_SYSTEM_INSTRUCTION
     prompt = f"<user_untrusted_input>\n{incident_desc}\n</user_untrusted_input>"
     res_text = await call_gemini(prompt, sys_instruction, json_mode=True)
-    
-    res_text_clean = res_text.strip()
-    if res_text_clean.startswith("```json"):
-        res_text_clean = res_text_clean[7:]
-    if res_text_clean.endswith("```"):
-        res_text_clean = res_text_clean[:-3]
-    return json.loads(res_text_clean.strip())
+    return json.loads(clean_json_output(res_text))
 
-async def ask_copilot(role: str, user_query: str, mock_data: dict, staff_id: str = None) -> str:
+
+async def ask_copilot(
+    role: str, user_query: str, mock_data: dict, staff_id: str = None
+) -> str:
     """Chat reasoning for Command Center, Ground Crew, and Fan views."""
     gates_str = json.dumps(mock_data.get("gates", []), indent=1)
     zones_str = json.dumps(mock_data.get("zones", []), indent=1)
@@ -252,7 +265,7 @@ async def ask_copilot(role: str, user_query: str, mock_data: dict, staff_id: str
             gates_status=gates_str,
             zones_status=zones_str,
             incidents_status=incidents_str,
-            staff_roster=staff_str
+            staff_roster=staff_str,
         )
     elif role == "ground-crew":
         current_staff = {}
@@ -264,12 +277,11 @@ async def ask_copilot(role: str, user_query: str, mock_data: dict, staff_id: str
         sys_instruction = GROUND_SYSTEM_INSTRUCTION.format(
             staff_details=json.dumps(current_staff),
             gates_status=gates_str,
-            incidents_status=incidents_str
+            incidents_status=incidents_str,
         )
     else:  # fan
         sys_instruction = FAN_SYSTEM_INSTRUCTION.format(
-            gates_status=gates_str,
-            zones_status=zones_str
+            gates_status=gates_str, zones_status=zones_str
         )
 
     prompt = f"<user_untrusted_input>\n{user_query}\n</user_untrusted_input>"
