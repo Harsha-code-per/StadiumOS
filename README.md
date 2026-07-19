@@ -1,5 +1,7 @@
 # ⚽ Stadium AI Co-Pilot
 
+![Stadium AI Co-Pilot Landing Interface](./readme-assets/landing.png)
+
 A unified, real-time stadium operations and wayfinding platform built for the **FIFA World Cup 2026 Stadium Operations Challenge (Challenge 4)**. It bridges the gap between the Control Room, Field Crew, and Fans under a single, secure backend reasoning layer.
 
 ### Live Deployed Link
@@ -12,7 +14,7 @@ A unified, real-time stadium operations and wayfinding platform built for the **
 
 | 📡 Control Room (Command Center) | 🦺 Ground Crew Portal (Field) | 🎫 Fan Wayfinding (Public) |
 | :---: | :---: | :---: |
-| ![Control Room Dashboard](https://raw.githubusercontent.com/Harsha-code-per/StadiumOS/main/readme-assets/command-center.png) | ![Ground Crew Mobile Portal](https://raw.githubusercontent.com/Harsha-code-per/StadiumOS/main/readme-assets/ground-crew.png) | ![Fan Wayfinding Portal](https://raw.githubusercontent.com/Harsha-code-per/StadiumOS/main/readme-assets/fan.png) |
+| ![Control Room Dashboard](./readme-assets/command-center.png) | ![Ground Crew Mobile Portal](./readme-assets/ground-crew.png) | ![Fan Wayfinding Portal](./readme-assets/fan.png) |
 | *Visual SVG layout, live incident desk, AI dispatch recommendations, simulation console, trilingual PA alerts.* | *Mobile-responsive roster view, checklist tracking, fast incident reporter form, local assistant chat.* | *Live gate queue board, interactive stand selector with best gate calculations, multilingual chat.* |
 
 ---
