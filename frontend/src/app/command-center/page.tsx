@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { api, DashboardData, Incident, Gate, Staff, Zone } from "@/lib/api";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { api, DashboardData, Incident } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,15 +28,13 @@ export default function CommandCenter() {
   const [ariaAnnouncement, setAriaAnnouncement] = useState("");
   const prevIncidentCount = useRef<number>(0);
 
-
-
   // Gate editor states
   const [editingGateId, setEditingGateId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<string>("");
   const [editWaitTime, setEditWaitTime] = useState<number>(0);
 
   // Fetch Dashboard State
-  const fetchDashboard = async (silent = false) => {
+  const fetchDashboard = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const res = await api.getDashboard();
@@ -56,18 +54,34 @@ export default function CommandCenter() {
         const freshInc = res.incidents.find(i => i.id === selectedIncident.id);
         if (freshInc) setSelectedIncident(freshInc);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load dashboard data.");
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to load dashboard data.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedIncident]);
 
   useEffect(() => {
-    fetchDashboard();
-    const interval = setInterval(() => fetchDashboard(true), 4000); // Auto refresh every 4 seconds
-    return () => clearInterval(interval);
-  }, [selectedIncident]);
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        fetchDashboard();
+      }
+    };
+    run();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchDashboard(true);
+      }
+    }, 4000); // Auto refresh every 4 seconds
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [fetchDashboard]);
 
   // Simulation handler
   const handleSimulate = async (type: "crowd_surge" | "medical" | "outage" | "vip_arrival") => {
@@ -80,8 +94,10 @@ export default function CommandCenter() {
       if (res.incident) {
         setSelectedIncident(res.incident);
       }
-    } catch (err: any) {
-      alert(`Simulation failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Unknown simulation error.";
+      alert(`Simulation failed: ${errorMessage}`);
     } finally {
       setSimulating(null);
     }
@@ -96,8 +112,10 @@ export default function CommandCenter() {
     try {
       await api.resetData();
       await fetchDashboard(false);
-    } catch (err: any) {
-      alert(`Reset failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Unknown reset error.";
+      alert(`Reset failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -116,8 +134,10 @@ export default function CommandCenter() {
     try {
       await api.dispatchStaff(selectedIncident.id, [staffId]);
       await fetchDashboard(true);
-    } catch (err: any) {
-      alert(`Dispatch failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Dispatch failed.";
+      alert(`Dispatch failed: ${errorMessage}`);
     } finally {
       setDispatching(false);
     }
@@ -131,8 +151,10 @@ export default function CommandCenter() {
       await api.resolveIncident(selectedIncident.id);
       setAnnouncements(null);
       await fetchDashboard(true);
-    } catch (err: any) {
-      alert(`Resolution failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Resolution failed.";
+      alert(`Resolution failed: ${errorMessage}`);
     } finally {
       setResolving(false);
     }
@@ -146,14 +168,14 @@ export default function CommandCenter() {
     try {
       const scripts = await api.generatePAAnnouncement(selectedIncident.id);
       setAnnouncements(scripts);
-    } catch (err: any) {
-      alert(`Announcement generation failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Announcement generation failed.";
+      alert(`Announcement generation failed: ${errorMessage}`);
     } finally {
       setDrafting(false);
     }
   };
-
-
 
   // Edit Gate parameters
   const handleUpdateGate = async (e: React.FormEvent) => {
@@ -164,8 +186,10 @@ export default function CommandCenter() {
       await api.updateGate(editingGateId, editStatus, undefined, editWaitTime, undefined);
       setEditingGateId(null);
       await fetchDashboard(true);
-    } catch (err: any) {
-      alert(`Failed to update gate: ${err.message}`);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to update gate.";
+      alert(`Failed to update gate: ${errorMessage}`);
     }
   };
 
@@ -196,6 +220,45 @@ export default function CommandCenter() {
         return "fill-emerald-200 stroke-emerald-600";
     }
   };
+
+  if (error && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 space-y-4">
+        <Card className="max-w-md border-rose-500/20 bg-rose-500/[0.02] shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-rose-700 flex items-center justify-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> Connection Offline
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Unable to reach the Stadium AI backend service.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {error}
+            </p>
+            <Button
+              onClick={() => fetchDashboard(false)}
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold"
+            >
+              🔄 Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-xs text-muted-foreground font-semibold animate-pulse">
+          ⚽ Connecting to Stadium Operations System...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -451,7 +514,7 @@ export default function CommandCenter() {
                 </div>
               </CardHeader>
               <CardContent className="text-xs space-y-3 pb-3 pt-0">
-                <p className="font-medium text-foreground">"{selectedIncident.description}"</p>
+                <p className="font-medium text-foreground">&quot;{selectedIncident.description}&quot;</p>
                 
                 {/* AI recommendation transparency */}
                 {selectedIncident.status === "Reported" && selectedIncident.recommended_staff_id && (
@@ -512,15 +575,15 @@ export default function CommandCenter() {
                     <span className="block font-bold text-[10px] uppercase text-muted-foreground tracking-wider">Trilingual Public Alerts (Gemini generated)</span>
                     <div className="space-y-1">
                       <span className="text-[9px] font-bold text-slate-500 uppercase">English (USA)</span>
-                      <p className="p-1.5 rounded bg-slate-50 text-[11px] font-medium border border-slate-100 text-foreground">"{announcements.en}"</p>
+                      <p className="p-1.5 rounded bg-slate-50 text-[11px] font-medium border border-slate-100 text-foreground">&quot;{announcements.en}&quot;</p>
                     </div>
                     <div className="space-y-1">
                       <span className="text-[9px] font-bold text-amber-600 uppercase">Español (Mexico)</span>
-                      <p className="p-1.5 rounded bg-amber-50/30 text-[11px] font-medium border border-amber-100/50 text-foreground">"{announcements.es}"</p>
+                      <p className="p-1.5 rounded bg-amber-50/30 text-[11px] font-medium border border-amber-100/50 text-foreground">&quot;{announcements.es}&quot;</p>
                     </div>
                     <div className="space-y-1">
                       <span className="text-[9px] font-bold text-blue-600 uppercase">Français (Canada)</span>
-                      <p className="p-1.5 rounded bg-blue-50/30 text-[11px] font-medium border border-blue-100/50 text-foreground">"{announcements.fr}"</p>
+                      <p className="p-1.5 rounded bg-blue-50/30 text-[11px] font-medium border border-blue-100/50 text-foreground">&quot;{announcements.fr}&quot;</p>
                     </div>
                   </div>
                 )}

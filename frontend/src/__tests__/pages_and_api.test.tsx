@@ -76,9 +76,9 @@ const setupMockFetch = (ok = true, status = 200) => {
   const mockFetch = vi.fn().mockImplementation((url: string) => {
     let payload = mockDashboardData;
     if (url.includes("/api/reset")) {
-      payload = { message: "Reset ok", data: mockDashboardData } as any;
+      payload = { message: "Reset ok", data: mockDashboardData } as unknown as typeof mockDashboardData;
     } else if (url.includes("/api/health")) {
-      payload = { status: "ok", timestamp: "now" } as any;
+      payload = { status: "ok", timestamp: "now" } as unknown as typeof mockDashboardData;
     }
     return Promise.resolve({
       ok,
@@ -137,7 +137,7 @@ describe("Command Center Dashboard page", () => {
     
     await waitFor(() => {
       // Find call containing /api/reset
-      const hasResetCall = mockFetch.mock.calls.some((call: any) => call[0].includes("/api/reset"));
+      const hasResetCall = mockFetch.mock.calls.some((call) => (call[0] as string).includes("/api/reset"));
       expect(hasResetCall).toBe(true);
     });
   });

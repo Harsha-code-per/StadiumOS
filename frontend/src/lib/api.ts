@@ -89,9 +89,9 @@ async function fetchAPI<T>(
     }
 
     return await response.json();
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId);
-    if (error.name === "AbortError") {
+    if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
       throw new Error("Request timed out. The backend may be waking up — please retry.");
     }
     throw error;
@@ -101,6 +101,7 @@ async function fetchAPI<T>(
 /**
  * Fetch with one automatic retry on timeout/network errors.
  * Used for AI chat endpoints that may encounter Azure cold-start delays.
+ * [FIFA BRIEF ANGLE: REAL-TIME DECISION SUPPORT] Retries handle transient network issues transparently.
  */
 async function fetchAPIWithRetry<T>(
   endpoint: string,
@@ -109,12 +110,16 @@ async function fetchAPIWithRetry<T>(
 ): Promise<T> {
   try {
     return await fetchAPI<T>(endpoint, options, timeoutMs);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorObj = err as Record<string, unknown> | null;
+    const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "";
+    const errorName = errorObj && typeof errorObj === "object" && "name" in errorObj ? String(errorObj.name) : "";
+
     const isRetryable =
-      err.name === "AbortError" ||
-      err.message?.includes("timed out") ||
-      err.message?.includes("fetch") ||
-      err.message?.includes("network");
+      errorName === "AbortError" ||
+      errorMessage.includes("timed out") ||
+      errorMessage.includes("fetch") ||
+      errorMessage.includes("network");
 
     if (isRetryable) {
       // Wait 1.5s then retry once

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, DashboardData, Gate, Zone } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { api, DashboardData, Zone } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Zap, Ticket, AlertTriangle, Compass } from "lucide-react";
 import ChatWidget from "@/components/ChatWidget";
@@ -12,23 +13,45 @@ export default function FanPortal() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [selectedStandId, setSelectedStandId] = useState<string>("stand_b"); // default Stand B
   const [activeStand, setActiveStand] = useState<Zone | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.getDashboard();
       setDashboard(res);
       const stand = res.zones.find(z => z.id === selectedStandId);
       if (stand) setActiveStand(stand);
-    } catch {
-      // fail silently — dashboard data updates on next poll
+      setError(null);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to load stadium layout.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [selectedStandId]);
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 4000); // Poll every 4 seconds to sync gate queues
-    return () => clearInterval(interval);
-  }, [selectedStandId]);
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        loadData();
+      }
+    };
+    run();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadData(true);
+      }
+    }, 4000); // Poll every 4 seconds to sync gate queues
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [loadData]);
 
   // Logic to calculate best gate for a selected stand
   const getBestGateForStand = () => {
@@ -45,6 +68,45 @@ export default function FanPortal() {
   };
 
   const bestGate = getBestGateForStand();
+
+  if (error && !dashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 space-y-4">
+        <Card className="max-w-md border-rose-500/20 bg-rose-500/[0.02] shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-rose-700 flex items-center justify-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> Connection Offline
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Unable to reach the Stadium AI backend service.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {error}
+            </p>
+            <Button
+              onClick={() => loadData(false)}
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold"
+            >
+              🔄 Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading && !dashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-xs text-muted-foreground font-semibold animate-pulse">
+          ⚽ Connecting to Fan Wayfinding Hub...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[96%] mx-auto space-y-6">

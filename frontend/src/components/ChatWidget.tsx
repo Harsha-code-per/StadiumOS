@@ -152,11 +152,13 @@ export default function ChatWidget({
         const res = await api.copilotChat(role, text, staffId);
         setChatLog(prev => [...prev, { sender: "copilot", text: res.answer }]);
         if (!isOpen) setHasUnread(true);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errorObj = err as Record<string, unknown> | null;
+        const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "";
         const errorText =
-          err.message?.includes("timed out")
+          errorMessage.includes("timed out")
             ? "Connection timed out. The backend may be waking up from idle. Tap Retry to try again."
-            : err.message || "Something went wrong. Please try again.";
+            : errorMessage || "Something went wrong. Please try again.";
         setChatLog(prev => [
           ...prev,
           { sender: "error", text: errorText, retryQuery: text },

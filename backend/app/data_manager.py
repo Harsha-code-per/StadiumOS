@@ -2,6 +2,12 @@ import json
 import os
 import threading
 import copy
+import queue
+import atexit
+import logging
+
+logger = logging.getLogger("data_manager")
+
 
 # Pristine initial seed data for system reset and initialization
 PRISTINE_SEED = {
@@ -224,7 +230,47 @@ class StadiumDataManager:
         self.filepath = filepath
         self.lock = threading.Lock()
         self.data = {}
+        self.write_queue = queue.Queue()
+        self.next_incident_id = 1
+        
+        # Start background writer thread
+        self.writer_thread = threading.Thread(target=self._writer_loop, daemon=True)
+        self.writer_thread.start()
+        
+        # Register graceful exit
+        atexit.register(self.shutdown)
+        
         self.load()
+
+    def _writer_loop(self):
+        while True:
+            payload = self.write_queue.get()
+            if payload is None:
+                self.write_queue.task_done()
+                break
+            try:
+                os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+                with open(self.filepath, "w") as f:
+                    json.dump(payload, f, indent=2)
+            except Exception as e:
+                logger.error(f"Error in background StadiumDataManager writer: {e}")
+            finally:
+                self.write_queue.task_done()
+
+    def _init_incident_counter(self):
+        # [FIFA BRIEF ANGLE: OPERATIONAL INTELLIGENCE] Monotonic Counter ID safety
+        incidents = self.data.get("incidents", [])
+        max_num = 0
+        for inc in incidents:
+            try:
+                parts = inc["id"].split("-")
+                if len(parts) == 2:
+                    num = int(parts[1])
+                    if num > max_num:
+                        max_num = num
+            except (ValueError, IndexError):
+                continue
+        self.next_incident_id = max_num + 1
 
     def load(self):
         with self.lock:
@@ -238,12 +284,17 @@ class StadiumDataManager:
             else:
                 self.data = copy.deepcopy(PRISTINE_SEED)
                 self.save_to_disk()
+            self._init_incident_counter()
 
     def save_to_disk(self):
-        # Assumes lock is held
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-        with open(self.filepath, "w") as f:
-            json.dump(self.data, f, indent=2)
+        # Assumes lock is held. Enqueues copies of data state for background serialization.
+        self.write_queue.put(copy.deepcopy(self.data))
+
+    def shutdown(self):
+        # Graceful shutdown flushing
+        self.write_queue.put(None)
+        self.write_queue.join()
+        self.writer_thread.join()
 
     def get_all(self):
         with self.lock:
@@ -252,6 +303,7 @@ class StadiumDataManager:
     def reset(self):
         with self.lock:
             self.data = copy.deepcopy(PRISTINE_SEED)
+            self._init_incident_counter()
             self.save_to_disk()
             return copy.deepcopy(self.data)
 
@@ -285,7 +337,8 @@ class StadiumDataManager:
     def add_incident(self, category: str, severity: str, location: str, description: str, ai_why: str = ""):
         with self.lock:
             incidents = self.data.setdefault("incidents", [])
-            inc_id = f"INC-{len(incidents) + 1:03d}"
+            inc_id = f"INC-{self.next_incident_id:03d}"
+            self.next_incident_id += 1
             
             import datetime
             now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()

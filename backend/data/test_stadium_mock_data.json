@@ -1,0 +1,266 @@
+{
+  "gates": [
+    {
+      "id": "gate_1",
+      "name": "Gate 1 (VIP)",
+      "status": "Open",
+      "flow_rate": 15,
+      "wait_time": 2,
+      "security_lanes_active": 2,
+      "security_lanes_total": 2
+    },
+    {
+      "id": "gate_2",
+      "name": "Gate 2",
+      "status": "Congested",
+      "flow_rate": 45,
+      "wait_time": 28,
+      "security_lanes_active": 4,
+      "security_lanes_total": 6
+    },
+    {
+      "id": "gate_3",
+      "name": "Gate 3",
+      "status": "Open",
+      "flow_rate": 30,
+      "wait_time": 8,
+      "security_lanes_active": 4,
+      "security_lanes_total": 4
+    },
+    {
+      "id": "gate_4",
+      "name": "Gate 4",
+      "status": "Open",
+      "flow_rate": 25,
+      "wait_time": 5,
+      "security_lanes_active": 3,
+      "security_lanes_total": 4
+    },
+    {
+      "id": "gate_5",
+      "name": "Gate 5",
+      "status": "Closed",
+      "flow_rate": 0,
+      "wait_time": 0,
+      "security_lanes_active": 0,
+      "security_lanes_total": 4
+    },
+    {
+      "id": "gate_6",
+      "name": "Gate 6",
+      "status": "Open",
+      "flow_rate": 35,
+      "wait_time": 12,
+      "security_lanes_active": 5,
+      "security_lanes_total": 6
+    }
+  ],
+  "zones": [
+    {
+      "id": "stand_a",
+      "name": "Stand A (North)",
+      "density": "Medium",
+      "current_count": 9500,
+      "capacity": 12000,
+      "gates": [
+        "gate_1",
+        "gate_2"
+      ]
+    },
+    {
+      "id": "stand_b",
+      "name": "Stand B (East)",
+      "density": "High",
+      "current_count": 14200,
+      "capacity": 15000,
+      "gates": [
+        "gate_2",
+        "gate_3"
+      ]
+    },
+    {
+      "id": "stand_c",
+      "name": "Stand C (South)",
+      "density": "Low",
+      "current_count": 3000,
+      "capacity": 10000,
+      "gates": [
+        "gate_4"
+      ]
+    },
+    {
+      "id": "stand_d",
+      "name": "Stand D (West)",
+      "density": "Medium",
+      "current_count": 7800,
+      "capacity": 11000,
+      "gates": [
+        "gate_4",
+        "gate_5"
+      ]
+    },
+    {
+      "id": "stand_e",
+      "name": "Stand E (Club/VIP)",
+      "density": "Low",
+      "current_count": 1200,
+      "capacity": 5000,
+      "gates": [
+        "gate_1"
+      ]
+    },
+    {
+      "id": "stand_f",
+      "name": "Stand F (Upper concourse)",
+      "density": "High",
+      "current_count": 11500,
+      "capacity": 13000,
+      "gates": [
+        "gate_6"
+      ]
+    }
+  ],
+  "staff": [
+    {
+      "id": "staff_1",
+      "name": "Officer Sarah Jenkins",
+      "role": "Security",
+      "zone": "Stand A (North)",
+      "status": "Active",
+      "tasks": [
+        "Monitor VIP gate flow",
+        "Inspect bag check Lane 2"
+      ]
+    },
+    {
+      "id": "staff_2",
+      "name": "Officer David Rao",
+      "role": "Security",
+      "zone": "Stand B (East)",
+      "status": "Dispatched",
+      "tasks": [
+        "Assist at congested Gate 2",
+        "Patrol upper concourse"
+      ]
+    },
+    {
+      "id": "staff_3",
+      "name": "Medic Elena Rostova",
+      "role": "Medical",
+      "zone": "Stand B (East)",
+      "status": "Active",
+      "tasks": [
+        "Standby at First Aid Station 2"
+      ]
+    },
+    {
+      "id": "staff_4",
+      "name": "Medic Marcus Vance",
+      "role": "Medical",
+      "zone": "Stand D (West)",
+      "status": "Active",
+      "tasks": [
+        "Standby at First Aid Station 4"
+      ]
+    },
+    {
+      "id": "staff_5",
+      "name": "Tech Alice Wong",
+      "role": "Maintenance",
+      "zone": "Stand C (South)",
+      "status": "Active",
+      "tasks": [
+        "Check digital signage at Stand C"
+      ]
+    },
+    {
+      "id": "staff_6",
+      "name": "Tech Carlos Mendez",
+      "role": "Maintenance",
+      "zone": "Stand F (Upper concourse)",
+      "status": "Active",
+      "tasks": [
+        "Repair turnstile at Gate 6"
+      ]
+    },
+    {
+      "id": "staff_7",
+      "name": "Usher Emily Chen",
+      "role": "Usher",
+      "zone": "Stand B (East)",
+      "status": "Active",
+      "tasks": [
+        "Direct ticket holders to Block 204"
+      ]
+    },
+    {
+      "id": "staff_8",
+      "name": "Usher James Smith",
+      "role": "Usher",
+      "zone": "Stand D (West)",
+      "status": "Active",
+      "tasks": [
+        "Assist wheelchair seating in Row 12"
+      ]
+    },
+    {
+      "id": "staff_9",
+      "name": "Supervisor Robert Duval",
+      "role": "Supervisor",
+      "zone": "Stand E (Club/VIP)",
+      "status": "Active",
+      "tasks": [
+        "Oversee overall operations"
+      ]
+    },
+    {
+      "id": "staff_10",
+      "name": "Officer Sam Wilson",
+      "role": "Security",
+      "zone": "Stand C (South)",
+      "status": "Active",
+      "tasks": [
+        "Patrol exterior perimeter"
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "INC-001",
+      "category": "Crowd",
+      "severity": "High",
+      "location": "Gate 2",
+      "status": "Dispatched",
+      "description": "Heavy backlog at ticket scanners. Crowd pressure mounting.",
+      "timestamp": "2026-07-19T10:30:00Z",
+      "assigned_staff": [
+        "staff_2"
+      ],
+      "ai_recommendation_why": "Officer Rao (Security) was dispatched because he was stationed in Stand B (East) next to Gate 2 and was unassigned."
+    },
+    {
+      "id": "INC-002",
+      "category": "Maintenance",
+      "severity": "Medium",
+      "location": "Stand C (South)",
+      "status": "Reported",
+      "description": "Broken beer tap leaking in concession area C4.",
+      "timestamp": "2026-07-19T10:45:00Z",
+      "assigned_staff": [],
+      "ai_recommendation_why": "Recommend assigning Tech Alice Wong, who is stationed in Stand C (South) and currently on active duty."
+    },
+    {
+      "id": "INC-003",
+      "category": "Medical",
+      "severity": "High",
+      "location": "Gate 3",
+      "status": "Resolved",
+      "description": "Fan dizzy in queue",
+      "timestamp": "2026-07-19T14:53:05.508629+00:00",
+      "assigned_staff": [
+        "staff_3"
+      ],
+      "ai_recommendation_why": "Medic Elena is stationed in Stand B (adjacent to Gate 3)."
+    }
+  ]
+}

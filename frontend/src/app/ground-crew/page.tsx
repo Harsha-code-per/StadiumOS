@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, DashboardData, Staff, Incident } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { api, DashboardData, Staff } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ export default function GroundCrew() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("staff_2"); // default David Rao
   const [activeStaff, setActiveStaff] = useState<Staff | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Incident Form States
   const [incLocation, setIncLocation] = useState("Stand B (East)");
@@ -21,22 +23,42 @@ export default function GroundCrew() {
   const [reportSuccess, setReportSuccess] = useState<string | null>(null);
 
 
-  const loadData = async () => {
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.getDashboard();
       setDashboard(res);
       const staff = res.staff.find(s => s.id === selectedStaffId);
       if (staff) setActiveStaff(staff);
-    } catch {
-      // fail silently — dashboard data updates on next poll
+      setError(null);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to load dashboard data.";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [selectedStaffId]);
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 4000); // Poll every 4 seconds to sync tasks
-    return () => clearInterval(interval);
-  }, [selectedStaffId]);
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        loadData();
+      }
+    };
+    run();
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadData(true);
+      }
+    }, 4000); // Poll every 4 seconds to sync tasks
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [loadData]);
 
   // Toggle Task Completion
   const handleToggleTask = async (taskIndex: number, currentText: string) => {
@@ -45,9 +67,11 @@ export default function GroundCrew() {
     try {
       const updated = await api.updateStaffTask(activeStaff.id, taskIndex, !isCompleted);
       setActiveStaff(updated);
-      loadData();
-    } catch (err: any) {
-      alert(`Failed to update task: ${err.message}`);
+      loadData(true);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Failed to update task.";
+      alert(`Failed to update task: ${errorMessage}`);
     }
   };
 
@@ -62,13 +86,54 @@ export default function GroundCrew() {
       const res = await api.reportIncident(incLocation, incDescription);
       setReportSuccess(`Incident reported successfully! ID: ${res.id}. AI classified as ${res.category} (${res.severity}).`);
       setIncDescription("");
-      loadData();
-    } catch (err: any) {
-      alert(`Reporting failed: ${err.message}`);
+      loadData(true);
+    } catch (err: unknown) {
+      const errorObj = err as Record<string, unknown> | null;
+      const errorMessage = errorObj && typeof errorObj === "object" && "message" in errorObj ? String(errorObj.message) : "Reporting failed.";
+      alert(`Reporting failed: ${errorMessage}`);
     } finally {
       setReporting(false);
     }
   };
+
+  if (error && !dashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 space-y-4">
+        <Card className="max-w-md border-rose-500/20 bg-rose-500/[0.02] shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-rose-700 flex items-center justify-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> Connection Offline
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Unable to reach the Stadium AI backend service.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {error}
+            </p>
+            <Button
+              onClick={() => loadData(false)}
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold"
+            >
+              🔄 Retry Connection
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading && !dashboard) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-xs text-muted-foreground font-semibold animate-pulse">
+          ⚽ Connecting to Ground Crew Network...
+        </p>
+      </div>
+    );
+  }
 
 
 

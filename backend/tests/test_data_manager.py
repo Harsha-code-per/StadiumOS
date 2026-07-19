@@ -27,6 +27,9 @@ def test_update_gate():
     assert gate["status"] == "Open"
     assert gate["wait_time"] == 5
     
+    # Wait for background write queue to flush to disk
+    manager.write_queue.join()
+    
     # Reload and check persistency
     new_manager = StadiumDataManager(TEST_FILEPATH)
     gates = new_manager.get_all()["gates"]
