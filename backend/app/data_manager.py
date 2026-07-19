@@ -1,3 +1,9 @@
+"""
+Thread-Safe Stadium Data Manager with Background Writer.
+Loads, resets, and performs in-memory operations on the stadium metrics
+and incidents, queueing changes for serialization on a background daemon.
+"""
+
 import json
 import os
 import threading

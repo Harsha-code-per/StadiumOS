@@ -1,3 +1,9 @@
+"""
+Gemini Client Wrapper for Stadium AI Co-Pilot.
+Manages persistent HTTPX connection pools, prompt validation/containment,
+dual-key API failover logs, and dynamic translation rendering.
+"""
+
 import os
 import httpx
 import asyncio

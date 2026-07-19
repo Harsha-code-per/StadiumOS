@@ -1,3 +1,9 @@
+"""
+Stadium AI Co-Pilot API Backend.
+Handles routing, rate limiting, GZip compression, mock state resets,
+incident reporting, and unified Gemini-powered operations chats.
+"""
+
 import time
 import datetime
 from fastapi import FastAPI, Request, HTTPException
