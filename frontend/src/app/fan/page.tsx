@@ -66,17 +66,17 @@ export default function FanPortal() {
       <div className="grid md:grid-cols-12 gap-6">
         
         {/* Left Side: Gate Queue Wait Times (6 cols) */}
-        <div className="md:col-span-6 space-y-6">
+        <div className="md:col-span-6 flex flex-col">
           
           {/* Traffic dashboard */}
-          <Card>
+          <Card className="h-full flex flex-col">
             <CardHeader className="py-4">
               <CardTitle className="text-base font-bold flex items-center gap-1.5"><Ticket className="h-5 w-5 text-primary" /> Live Gate Wait Times</CardTitle>
               <CardDescription className="text-xs">
                 Turnstile queue updates synced directly from security lanes.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3 pb-4">
+            <CardContent className="grid grid-cols-2 gap-3 pb-4 flex-1">
               {dashboard?.gates.map(gate => (
                 <div 
                   key={gate.id} 
@@ -107,15 +107,15 @@ export default function FanPortal() {
         </div>
 
         {/* Right Side: Interactive wayfinder tool (6 cols) */}
-        <div className="md:col-span-6 space-y-6">
-          <Card>
+        <div className="md:col-span-6 flex flex-col">
+          <Card className="h-full flex flex-col">
             <CardHeader className="py-4">
               <CardTitle className="text-base font-bold">🗺️ Dynamic Wayfinding Helper</CardTitle>
               <CardDescription className="text-xs">
                 Select your seating stand to discover the fastest entrance/exit gate right now.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 pb-4">
+            <CardContent className="space-y-4 pb-4 flex-1">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-muted-foreground">Select Stand Zone</label>
                 <Select 

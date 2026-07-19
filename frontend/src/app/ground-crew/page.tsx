@@ -73,7 +73,7 @@ export default function GroundCrew() {
 
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-[96%] mx-auto space-y-6">
       
       {/* Roster Switcher */}
       <Card className="border-primary/20 bg-primary/[0.01]">
@@ -106,9 +106,9 @@ export default function GroundCrew() {
 
       {/* Roster detail and tasks */}
       {activeStaff && (
-        <div className="grid md:grid-cols-12 gap-6">
+        <div className="grid md:grid-cols-12 gap-6 items-stretch">
           {/* Roster card & Task list (7 cols) */}
-          <div className="md:col-span-7 space-y-6">
+          <div className="md:col-span-7 flex flex-col space-y-6">
             
             {/* Status & Zone */}
             <Card>
@@ -133,14 +133,14 @@ export default function GroundCrew() {
             </Card>
 
             {/* Checklists */}
-            <Card>
+            <Card className="flex-1 flex flex-col">
               <CardHeader className="py-4">
                 <CardTitle className="text-base font-bold">📋 Tasks & Action Checklists</CardTitle>
                 <CardDescription className="text-xs">
                   Tap tasks to toggle execution status. Dispatches automatically sync here.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 pb-4">
+              <CardContent className="space-y-3 pb-4 flex-1">
                 {activeStaff.tasks.length > 0 ? (
                   activeStaff.tasks.map((task, idx) => {
                     const isCompleted = task.startsWith("[COMPLETED] ");
@@ -181,15 +181,15 @@ export default function GroundCrew() {
           </div>
 
           {/* Incident reporter (5 cols) */}
-          <div className="md:col-span-5 space-y-6">
-            <Card className="border-l-[4px] border-l-primary shadow-md">
+          <div className="md:col-span-5 flex flex-col">
+            <Card className="border-l-[4px] border-l-primary shadow-md h-full flex flex-col">
               <CardHeader className="py-4">
                 <CardTitle className="text-base font-bold">⚠️ Report Incident to Control Room</CardTitle>
                 <CardDescription className="text-xs font-medium">
                   Submit field anomalies. The backend AI automatically categorizes and dispatches responders.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pb-4">
+              <CardContent className="pb-4 flex-1">
                 <form onSubmit={handleReportIncident} className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground">Location</label>

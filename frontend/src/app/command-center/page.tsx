@@ -387,7 +387,7 @@ export default function CommandCenter() {
         {/* Left Side: Live Incident Desk (lg:col-span-5) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Incident Feed */}
-          <Card className="h-[320px] flex flex-col border-l-[4px] border-l-primary shadow-md">
+          <Card className="min-h-[465px] flex flex-col border-l-[4px] border-l-primary shadow-md">
             <CardHeader className="py-3 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-1.5"><AlertTriangle className="h-5 w-5 text-primary" /> Live Incident Desk</CardTitle>
